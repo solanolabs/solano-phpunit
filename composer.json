@@ -1,0 +1,37 @@
+{
+    "name": "solano/solano-phpunit",
+    "type": "library",
+    "description": "Parallel testing for Solano CI",
+    "homepage": "https://www.solanolabs.com/",
+    "keywords": [
+        "phpunit",
+        "testing",
+        "solano",
+        "parallel",
+        "concurrent",
+        "ci"
+    ],
+    "authors": [
+        {
+            "name": "Isaac Chapman",
+            "email": "isaac@solanolabs.com",
+            "role": "lead"
+        }
+    ],
+    "require": {
+        "phpunit/phpunit": "4.*"
+    },
+    "autoload": {
+        "classmap": [
+            "src/"
+        ]
+    },
+    "bin": [
+        "solano-phpunit"
+    ],
+    "autoload-dev": {
+        "classmap": [
+            "tests/"
+        ]
+    }
+}

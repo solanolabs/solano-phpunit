@@ -1,0 +1,33 @@
+# Solano CI configuration for solano-phpunit
+#
+# Copyright (c) 2015 Solano Labs All Rights Reserved
+
+### Pre-parallel testing
+tests:
+  - ./solano-phpunit       # Default location when added by composer: vendor/bin/solano-phpunit
+  - ./vendor/bin/phpunit   # Testing with only phpunit
+
+### Parallel PHPUnit testing:
+#tests:
+#  - type: phpunit
+#    mode: parallel
+#    output: exit-status
+#    command: ./solano-phpunit    # Default location when added by composer: vendor/bin/solano-phpunit
+#    config: phpunit.xml          # If not supplied, defaults are checked in order: phpunit.xml, phpunit.xml.dist
+#    files:
+#      - tests/*Test.php
+#      - tests/**/*Test.php
+#      - ./vendor/bin/phpunit         # Testing with only phpunit (not parallel)
+
+php:
+  php_version: 5.5
+
+hooks:
+  pre_setup: config/solano-pre_setup.sh   # Runs composer if dependency cache isn't present
+
+cache:
+  key_paths:
+    - composer.json
+    - composer.lock
+  save_paths:
+    - vendor
