@@ -5,7 +5,6 @@
 ### Pre-parallel testing
 tests:
   - ./solano-phpunit       # Default location when added by composer: vendor/bin/solano-phpunit
-  - ./vendor/bin/phpunit   # Testing with only phpunit
 
 ### Parallel PHPUnit testing:
 #tests:
@@ -17,7 +16,6 @@ tests:
 #    files:
 #      - tests/*Test.php
 #      - tests/**/*Test.php
-#      - ./vendor/bin/phpunit         # Testing with only phpunit (not parallel)
 
 php:
   php_version: 5.5
@@ -28,6 +26,5 @@ hooks:
 cache:
   key_paths:
     - composer.json
-    - composer.lock
   save_paths:
     - vendor
