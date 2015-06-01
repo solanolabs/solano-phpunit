@@ -364,6 +364,8 @@ class SolanoLabs_PHPUnit_Configuration
         $file = SolanoLabs_PHPUnit_Util::truepath('tddium_output.json');
         if ($env_file = getenv('TDDIUM_OUTPUT_FILE')) {
             $file = SolanoLabs_PHPUnit_Util::truepath($env_file);
+        } elseif (getenv('TDDIUM')) {
+            $file = SolanoLabs_PHPUnit_Util::truepath(getenv('HOME') . DIRECTORY_SEPARATOR . 'phpunit.json');
         }
 
         if ($key = array_search('--tddium-output-file', $this->args)) {

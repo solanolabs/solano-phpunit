@@ -144,9 +144,9 @@ class SolanoLabs_PHPUnit_Command
         echo("   --configuration <file>       Specify a non-default phpunit.xml file\n");
         echo("   --temp-dir <dir>             Specify a directory for temporary files\n");
         echo("   --files <file_list>          Comma separated list of files. If not specified, all tests defined in configuration file will be run.\n");
-        echo("   --tddium-output-file <file>  Defaults are \$TDDIUM_OUTPUT_FILE then tddium_output_file.json\n");
+        echo("   --tddium-output-file <file>  Can also be set with \$TDDIUM_OUTPUT_FILE environment variable\n");
         echo("   --ignore-exclude             Ignore <exclude/> child nodes of <testsuite/>.\n");
-        echo("   --split                      Run tests one test file at a time.\n");
+        echo("   --split                      Run tests one test file per process.\n");
         echo("   -h|--help                    Prints this usage information.\n");
         echo(" * Any other supplied options will be passed on to phpunit\n");
     }

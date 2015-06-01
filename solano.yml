@@ -1,0 +1,25 @@
+# Solano CI configuration for solano-phpunit
+#
+# Copyright (c) 2015 Solano Labs All Rights Reserved
+
+tests:
+  - type: phpunit
+    mode: parallel
+    output: exit-status
+    command: ./solano-phpunit    # Default location when added by composer: vendor/bin/solano-phpunit
+    config: phpunit.xml          # If not supplied, defaults are checked in order: phpunit.xml, phpunit.xml.dist
+    files:
+      - tests/**Test.php
+
+php:
+  php_version: 5.5
+
+hooks:
+  pre_setup: composer.phar install
+
+cache:
+  key_paths:
+    - composer.json
+    - composer.lock
+  save_paths:
+    - vendor
