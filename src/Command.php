@@ -60,12 +60,23 @@ class SolanoLabs_PHPUnit_Command
 
         // Ensure there are files to test
         if (!count($config->testFiles)) {
-            if ($exit) {
-                echo("No test files found.\n");
-                self::usage();
-                exit(2);
+            if (count($config->excludeFiles)) {
+                echo ("Only <exclude/> designated files specified/\n");
+                $stripPath = getenv('TDDIUM_REPO_ROOT') ? getenv('TDDIUM_REPO_ROOT') : getcwd();
+                SolanoLabs_PHPUnit_Util::writeOutputFile($config->outputFile, $stripPath, $config->testFiles, $config->excludeFiles);
+                if ($exit) {
+                    exit(0);
+                } else {
+                    return true;
+                }
             } else {
-                return false;
+                if ($exit) {
+                    echo("No test files found.\n");
+                    self::usage();
+                    exit(2);
+                } else {
+                    return false;
+                }
             }
         }
 
