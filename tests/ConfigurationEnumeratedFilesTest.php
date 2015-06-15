@@ -46,12 +46,14 @@ class Solano_PHPUnit_Wrapper_ConfigurationEnumeratedFiles_Test extends PHPUnit_F
     public function testCliEnumerateTestFiles()
     {
         $args = array('', '--configuration', 'tests' . DIRECTORY_SEPARATOR . '_files' . DIRECTORY_SEPARATOR . 'phpunit.xml', 
-            '--files', 'mock_tests' . DIRECTORY_SEPARATOR . 't1Test.php');
+            '--files', 'tests' . DIRECTORY_SEPARATOR . '_files' . DIRECTORY_SEPARATOR .
+            'mock_tests' . DIRECTORY_SEPARATOR . 't1Test.php');
         $config = SolanoLabs_PHPUnit_Configuration::parseArgs($args);
         $this->assertEquals(1, count($config->testFiles));
 
         $args = array('', '--configuration', 'tests' . DIRECTORY_SEPARATOR . '_files' . DIRECTORY_SEPARATOR . 'phpunit.xml', 
-            '--files', 'mock_tests' . DIRECTORY_SEPARATOR . 't1Test.php,mock_tests' . DIRECTORY_SEPARATOR . 't2Test.php');
+            '--files', 'tests' . DIRECTORY_SEPARATOR . '_files' . DIRECTORY_SEPARATOR . 'mock_tests' . DIRECTORY_SEPARATOR .
+            't1Test.php,tests' . DIRECTORY_SEPARATOR . '_files' . DIRECTORY_SEPARATOR . 'mock_tests' . DIRECTORY_SEPARATOR . 't2Test.php');
         $config = SolanoLabs_PHPUnit_Configuration::parseArgs($args);
         $this->assertEquals(2, count($config->testFiles));
     }
