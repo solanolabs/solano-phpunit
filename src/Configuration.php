@@ -187,7 +187,7 @@ class SolanoLabs_PHPUnit_Configuration
                 $files = explode(',', $this->args[1 + $key]);
                 foreach ($files as $file) {
                     if (!SolanoLabs_PHPUnit_Util::isRootRelativePath($file)) {
-                        $file = SolanoLabs_PHPUnit_Util::truepath($file, $this->workingDir);
+                        $file = SolanoLabs_PHPUnit_Util::truepath($file, getcwd());
                     }
                     if (!file_exists($file)) {
                         $this->parseErrors[] = "### Error: File does not exist: " . $file;
