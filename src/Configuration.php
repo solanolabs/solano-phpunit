@@ -390,9 +390,9 @@ class SolanoLabs_PHPUnit_Configuration
         } else{
             try {
                 $fp = fopen($file, 'w');
-                fwrite($fp, 'test-write');
+                fwrite($fp, '{"byfile":{}}');  // Write empty results to start 
                 fclose($fp);
-                unlink($file);
+                //unlink($file);               // Do not unlink for the moment
             } catch (Exception $e) {
                 $this->parseErrors[] = "### Error: $file is not writable: " . $e->getMessage();
             }
