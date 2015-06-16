@@ -120,7 +120,15 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
                     }
                     break;
                 case 'exclude':
-                    $excludePaths[] = SolanoLabs_PHPUnit_Util::truepath($node->nodeValue, $this->workingDir);
+                    if ($node->hasChildNodes()) {
+                        foreach($node->childNodes as $excludeNode) {
+                            if ($excludeNode->nodeValue) {
+                                $excludePaths[] = SolanoLabs_PHPUnit_Util::truepath($excludeNode->nodeValue, $this->workingDir);
+                            }
+                        }
+                    } elseif ($node->nodeValue) {
+                        $excludePaths[] = SolanoLabs_PHPUnit_Util::truepath($node->nodeValue, $this->workingDir);
+                    }
                     break;
             }
         }
