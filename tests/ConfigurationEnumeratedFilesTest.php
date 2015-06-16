@@ -21,7 +21,6 @@ class Solano_PHPUnit_Wrapper_ConfigurationEnumeratedFiles_Test extends PHPUnit_F
 
         $args = array('', '--configuration', 'tests' . DIRECTORY_SEPARATOR . '_files' . DIRECTORY_SEPARATOR . 'exclude_wildcard.xml');
         $config = SolanoLabs_PHPUnit_Configuration::parseArgs($args);
-        print_r($config);
         $this->assertEquals(5, count($config->testFiles));
         # Re-enable for parallel testing (enumerated --files will only include excluded files)
         #$this->assertEquals(1, count($config->excludeFiles));
