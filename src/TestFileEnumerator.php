@@ -140,12 +140,19 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
                         $this->excludeFiles[] = $files[$i];
                         unset($files[$i]);
                         break;
+                    } elseif (false !== strpos($excludePath, '*')) {
+                        // check wildcard match
+                        if (fnmatch($excludePath, $files[$i])) {
+                            $this->excludeFiles[] = $files[$i];
+                            unset($files[$i]);
+                            break;
+                        }
                     }
                 }
             }
         }
 
-        $this->testFiles = array_merge($this->testFiles, $files);
+        $this->testFiles = array_values(array_unique(array_merge($this->testFiles, $files)));
     }
 
     /**
