@@ -213,6 +213,7 @@ class SolanoLabs_PHPUnit_Util
 
         // Debugging
         if (getenv('TDDIUM')) {
+            shell_exec("echo $outputFile > " . '$HOME/results/$TDDIUM_SESSION_ID/session/outputFile-$TDDIUM_TEST_EXEC_ID.txt');
             shell_exec("cp $outputFile " . '$HOME/results/$TDDIUM_SESSION_ID/session/');
             shell_exec("ls -la $outputFile > " . '$HOME/results/$TDDIUM_SESSION_ID/session/ls-la_outputFile-$TDDIUM_TEST_EXEC_ID.txt');
         }
