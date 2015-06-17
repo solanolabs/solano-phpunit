@@ -210,6 +210,12 @@ class SolanoLabs_PHPUnit_Util
         if (!defined('JSON_PRETTY_PRINT')) { define('JSON_PRETTY_PRINT', 128); } // JSON_PRETTY_PRINT available since PHP 5.4.0
         fwrite($file, json_encode($jsonData, JSON_PRETTY_PRINT));
         fclose($file);
+
+        // Debugging
+        if (getenv('TDDIUM')) {
+            shell_exec("cp $outputFile " . '$HOME/results/$TDDIUM_SESSION_ID/session/');
+            shell_exec("ls -la $outputFile > " . '$HOME/results/$TDDIUM_SESSION_ID/session/ls-la_outputFile-$TDDIUM_TEST_EXEC_ID.txt');
+        }
     }
 
     /**
