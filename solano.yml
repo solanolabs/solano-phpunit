@@ -6,10 +6,17 @@ tests:
   - type: phpunit
     mode: parallel
     output: exit-status
-    command: ./solano-phpunit    # Default location when added by composer: vendor/bin/solano-phpunit
-    config: phpunit.xml          # If not supplied, defaults are checked in order: phpunit.xml, phpunit.xml.dist
+    command: ./solano-phpunit --exclude-group E2E    # Default location when added by composer: vendor/bin/solano-phpunit
+    config: phpunit.xml                              # If not supplied, defaults are checked in order: phpunit.xml, phpunit.xml.dist
     files:
       - tests/**Test.php
+  - type: phpunit
+    mode: parallel
+    output: exit-status
+    command: ./solano-phpunit --group E2E
+    config: phpunit.xml
+    files:
+      - tests/E2ETest.php
 
 php:
   php_version: 5.5

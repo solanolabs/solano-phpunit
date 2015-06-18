@@ -146,14 +146,14 @@ class SolanoLabs_PHPUnit_Command
                 $shortFilename = substr($testFile, 1 + strlen(getcwd()));
                 if (empty($jsonData['byfile'][$shortFilename])) {
                     // All tests in file were skipped
-                    $jsonData['byfile'][$shortFilename] = array(
+                    $jsonData['byfile'][$shortFilename] = array(array(
                         'id' => $shortFilename,
                         'address' => $shortFilename,
                         'status' => 'skip',
                         'stderr' => 'Skipped Test File: ' . $shortFilename . "\n" . 'All tests excluded by --[exclude-]group',
                         'stdout' => '',
                         'time' => 0,
-                        'traceback' => array());
+                        'traceback' => array()));
                 }
             }
             $file = fopen($config->outputFile, 'w');
