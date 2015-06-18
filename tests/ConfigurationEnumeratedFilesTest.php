@@ -1,4 +1,8 @@
 <?php
+/**
+ * @group Configuration
+ * @group ConfigurationEnumeratedFiles
+ */
 class Solano_PHPUnit_Wrapper_ConfigurationEnumeratedFiles_Test extends PHPUnit_Framework_TestCase
 {
     public function testEnumerateTestFiles()

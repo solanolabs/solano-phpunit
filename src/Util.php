@@ -177,6 +177,27 @@ class SolanoLabs_PHPUnit_Util
     }
 
     /**
+     * Read output file.
+     *
+     * @param string          $outputFile
+     */
+    public static function readOutputFile($outputFile)
+    {
+        if (!file_exists($outputFile)) {
+            return array('byfile' => array());
+        } else {
+            $json = json_decode(file_get_contents($outputFile), true);
+            if (is_null($json) || !isset($json['byfile']) || !is_array($json['byfile'])) {
+                echo("### ERROR: JSON data could not be read from " . $outputFile . "\n");
+                unlink($outputFile);
+                return array('byfile' => array());
+            } else {
+                return $json;
+            }
+        }
+    }
+
+    /**
      * Write output file.
      * 
      * @param string          $outputFile
@@ -187,19 +208,9 @@ class SolanoLabs_PHPUnit_Util
     public static function writeOutputFile($outputFile, $stripPath, $files = array(), $excludeFiles = array())
     {
         $files = self::convertOutputToUTF8($files);
-        if (file_exists($outputFile)) {
-            // If the output file exists, add to it
-            $json = json_decode(file_get_contents($outputFile), true);
-            if (is_null($json) || !isset($json['byfile']) || !is_array($json['byfile'])) {
-                // JSON could not be read
-                echo("### ERROR: JSON data could not be read from " . $outputFile . "\n");
-                $jsonData = array('byfile' => $files);
-            } else {
-                $jsonData = array('byfile' => array_merge($json['byfile'], $files));
-            }
-        } else {
-            // Output file doesn't exist, create fresh.
-            $jsonData = array('byfile' => $files);
+        $jsonData = self::readOutputFile($outputFile);
+        if (is_array($files) && count($files)) {
+            $jsonData = array('byfile' => array_merge($jsonData['byfile'], $files));
         }
 
         if (count($excludeFiles)) {

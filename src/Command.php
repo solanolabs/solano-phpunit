@@ -139,6 +139,30 @@ class SolanoLabs_PHPUnit_Command
         $phpUnit = new PHPUnit_TextUI_Command();
         $exitCode = $phpUnit->run($config->args, false);
 
+        // Add skip notices if group excludes are in place
+        if (getenv('TDDIUM') && !empty($config->outputFile)) {
+            $jsonData = SolanoLabs_PHPUnit_Util::readOutputFile($config->outputFile);
+            foreach($config->testFiles as $testFile) {
+                $shortFilename = substr($testFile, 1 + strlen(getcwd()));
+                if (empty($jsonData['byfile'][$shortFilename])) {
+                    // All tests in file were skipped
+                    $jsonData['byfile'][$shortFilename] = array(array(
+                        'id' => $shortFilename,
+                        'address' => $shortFilename,
+                        'status' => 'skip',
+                        'stderr' => 'Skipped Test File: ' . $shortFilename . "\n" . 'All tests excluded by --[exclude-]group',
+                        'stdout' => '',
+                        'time' => 0,
+                        'traceback' => array()));
+                }
+            }
+            $file = fopen($config->outputFile, 'w');
+            if (!defined('JSON_PRETTY_PRINT')) { define('JSON_PRETTY_PRINT', 128); } // JSON_PRETTY_PRINT available since PHP 5.4.0
+            fwrite($file, json_encode($jsonData, JSON_PRETTY_PRINT));
+            fclose($file);
+        }
+
+
         // Delete temporary XML file
         unlink($tempFile);
 
