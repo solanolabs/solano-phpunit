@@ -120,7 +120,15 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
                     }
                     break;
                 case 'exclude':
-                    $excludePaths[] = SolanoLabs_PHPUnit_Util::truepath($node->nodeValue, $this->workingDir);
+                    if ($node->hasChildNodes()) {
+                        foreach($node->childNodes as $excludeNode) {
+                            if ($excludeNode->nodeValue) {
+                                $excludePaths[] = SolanoLabs_PHPUnit_Util::truepath($excludeNode->nodeValue, $this->workingDir);
+                            }
+                        }
+                    } elseif ($node->nodeValue) {
+                        $excludePaths[] = SolanoLabs_PHPUnit_Util::truepath($node->nodeValue, $this->workingDir);
+                    }
                     break;
             }
         }
@@ -140,12 +148,19 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
                         $this->excludeFiles[] = $files[$i];
                         unset($files[$i]);
                         break;
+                    } elseif (false !== strpos($excludePath, '*')) {
+                        // check wildcard match
+                        if (fnmatch($excludePath, $files[$i])) {
+                            $this->excludeFiles[] = $files[$i];
+                            unset($files[$i]);
+                            break;
+                        }
                     }
                 }
             }
         }
 
-        $this->testFiles = array_merge($this->testFiles, $files);
+        $this->testFiles = array_values(array_unique(array_merge($this->testFiles, $files)));
     }
 
     /**
