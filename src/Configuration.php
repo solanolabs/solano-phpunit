@@ -390,7 +390,7 @@ class SolanoLabs_PHPUnit_Configuration
         } else{
             try {
                 $fp = fopen($file, 'w');
-                fwrite($fp, 'test-write');
+                fwrite($fp, '{"byfile":{}}'); // Write empty entry for minimal race condition possibility
                 fclose($fp);
                 unlink($file);
             } catch (Exception $e) {
