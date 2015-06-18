@@ -150,7 +150,7 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
      */
     public function addIncompleteTest(PHPUnit_Framework_Test $test, Exception $e, $time)
     {
-        $this->addNonPassTest('error', $test, $e, $time, 'Incomplete Test: ');
+        $this->addNonPassTest('skip', $test, $e, $time, 'Incomplete Test: ');
     }
 
     /**
