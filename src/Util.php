@@ -217,10 +217,7 @@ class SolanoLabs_PHPUnit_Util
             $jsonData = array('byfile' => array_merge($jsonData['byfile'], self::generateExcludeFileNotices($excludeFiles, $stripPath)));
         }
 
-        $file = fopen($outputFile, 'w');
-        if (!defined('JSON_PRETTY_PRINT')) { define('JSON_PRETTY_PRINT', 128); } // JSON_PRETTY_PRINT available since PHP 5.4.0
-        fwrite($file, json_encode($jsonData, JSON_PRETTY_PRINT));
-        fclose($file);
+        self::writeJsonToFile($outputFile, $jsonData);
     }
 
     /**
@@ -228,14 +225,63 @@ class SolanoLabs_PHPUnit_Util
      *
      * @param array                 $array
      */
-    public static function convertOutputToUTF8($array)
+    public static function convertOutputToUTF8($data)
     {
-        array_walk_recursive($array, function (&$input) {
-        if (is_string($input)) {
-                $input = PHPUnit_Util_String::convertToUtf8($input);
-            }
-        });
-        unset($input);
-        return $array;
+        if (is_array($data)) {
+            array_walk_recursive($data, function (&$input) {
+            if (is_string($input)) {
+                    $input = PHPUnit_Util_String::convertToUtf8($input);
+                }
+            });
+            unset($input);
+        } else {
+            $data = PHPUnit_Util_String::convertToUtf8($data);
+        }
+        return $data;
+    }
+
+    /** 
+     * Add individual testfile result to output file
+     *
+     */
+    public static function writeTestcaseToFile($outputFile, $file, $testcase)
+    {
+        $file = self::convertOutputToUTF8($file);
+        $testcase = self::convertOutputToUTF8($testcase);
+        $jsonData = self::readOutputFile($outputFile);
+        if (empty($jsonData['byfile'][$file])) {
+            $jsonData['byfile'][$file] = array($testcase);
+        } else {
+            $jsonData['byfile'][$file][] = $testcase;
+        }
+
+        self::writeJsonToFile($outputFile, $jsonData);
+    }
+
+    /** 
+     * Add excluded files to output file
+     *
+     */
+    public static function writeExcludesToFile($outputFile, $stripPath, $excludeFiles = array())
+    {
+        if (!$excludeFiles || !is_array($excludeFiles) || !count($excludeFiles)) { return; }
+        $files = self::convertOutputToUTF8($files);
+        $jsonData = self::readOutputFile($outputFile);
+
+        if (count($excludeFiles)) {
+            $jsonData = array('byfile' => array_merge($jsonData['byfile'], self::generateExcludeFileNotices($excludeFiles, $stripPath)));
+        }
+
+        self::writeJsonToFile($outputFile, $jsonData);
+    }
+
+    /** 
+     * flush to file
+     */
+    public static function writeJsonToFile($outputFile, $jsonData) {
+        $file = fopen($outputFile, 'w');
+        if (!defined('JSON_PRETTY_PRINT')) { define('JSON_PRETTY_PRINT', 128); } // JSON_PRETTY_PRINT available since PHP 5.4.0
+        fwrite($file, json_encode($jsonData, JSON_PRETTY_PRINT));
+        fclose($file);
     }
 }

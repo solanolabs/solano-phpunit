@@ -247,15 +247,18 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
             $this->files[$file] = array();
         }
         $this->files[$file][] = $testcase;
+        // Flush test to report
+        SolanoLabs_PHPUnit_Util::writeTestcaseToFile($this->outputFile, $file, $testcase);
+
     }
 
     /**
-     * Write output file.
+     * Finish writing output file.
      * Called by PHPUnit_Framework_TestResult::flushListeners()
      */
     public function flush()
     {
-        SolanoLabs_PHPUnit_Util::writeOutputFile($this->outputFile, $this->stripPath, $this->files, $this->excludeFiles);
+        SolanoLabs_PHPUnit_Util::writeExcludesToFile($this->outputFile, $this->stripPath, $this->excludeFiles);
     }
 }
 

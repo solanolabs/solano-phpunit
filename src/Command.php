@@ -132,6 +132,17 @@ class SolanoLabs_PHPUnit_Command
         $tempFile = tempnam($config->tempDir, 'SLPHPU');
         file_put_contents($tempFile, $xml);
 
+        // Pre-populate json report when appropriate
+        if (getenv('TDDIUM') && !empty($config->outputFile)) {
+            $byfiles = array();
+            foreach($config->testFiles as $testFile) {
+                $shortFilename = substr($testFile, 1 + strlen(getcwd()));
+                $byfiles[$shortFilename] = array();
+            }
+            $jsonData = array('byfile' => $byfiles);
+            SolanoLabs_PHPUnit_Util::writeJsonToFile($config->outputFile, $jsonData);
+        }
+
         // Run PHPUnit
         $config->args[0] = 'vendor/phpunit/phpunit/phpunit'; // Just a placeholder
         $config->args[] = "--configuration";
@@ -156,10 +167,8 @@ class SolanoLabs_PHPUnit_Command
                         'traceback' => array()));
                 }
             }
-            $file = fopen($config->outputFile, 'w');
-            if (!defined('JSON_PRETTY_PRINT')) { define('JSON_PRETTY_PRINT', 128); } // JSON_PRETTY_PRINT available since PHP 5.4.0
-            fwrite($file, json_encode($jsonData, JSON_PRETTY_PRINT));
-            fclose($file);
+
+            SolanoLabs_PHPUnit_Util::writeJsonToFile($config->outputFile, $jsonData);
         }
 
 

@@ -55,6 +55,9 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     {
         $this->writeProgressWithColor('fg-red, bold', 'ERROR');
         $this->lastTestFailed = true;
+        if (getenv('TDDIUM')) {
+            print "\n" . $e->__toString();
+        }
     }
 
     /**
@@ -68,6 +71,9 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     {
         $this->writeProgressWithColor('bg-red, fg-white', 'FAIL');
         $this->lastTestFailed = true;
+        if (getenv('TDDIUM')) {
+            print "\n" . $e->__toString();
+        }
     }
 
     /**
@@ -81,6 +87,9 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     {
         $this->writeProgressWithColor('fg-yellow, bold', 'INCOMPLETE');
         $this->lastTestFailed = true;
+        if (getenv('TDDIUM')) {
+            print "\n" . $e->__toString();
+        }
     }
 
     /**
@@ -94,6 +103,9 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     {
         $this->writeProgressWithColor('fg-yellow, bold', 'RISKY');
         $this->lastTestFailed = true;
+        if (getenv('TDDIUM')) {
+            print "\n" . $e->__toString();
+        }
     }
 
     /**
