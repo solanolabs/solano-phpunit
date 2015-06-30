@@ -31,4 +31,9 @@ if (!defined('SOLANOLABS_COMPOSER_INSTALL')) {
 
 require SOLANOLABS_COMPOSER_INSTALL;
 
+// If PHP version 5.2+, try to catch fatal errors
+if (function_exists('register_shutdown_function')) {
+    include(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . "CatchFatalError.php");
+}
+
 SolanoLabs_PHPUnit_Command::main();
