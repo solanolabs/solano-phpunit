@@ -278,10 +278,11 @@ class SolanoLabs_PHPUnit_Util
     /** 
      * flush to file
      */
-    public static function writeJsonToFile($outputFile, $jsonData) {
+    public static function writeJsonToFile($outputFile, $jsonData)
+    {
         $file = fopen($outputFile, 'w');
         if (!defined('JSON_PRETTY_PRINT')) { define('JSON_PRETTY_PRINT', 128); } // JSON_PRETTY_PRINT available since PHP 5.4.0
-        fwrite($file, json_encode($jsonData, JSON_PRETTY_PRINT));
+        fwrite($file, str_replace('\/', '/', json_encode($jsonData, JSON_PRETTY_PRINT))); // unescape the json_encode slashes
         fclose($file);
     }
 }

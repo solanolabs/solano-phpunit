@@ -132,16 +132,22 @@ class SolanoLabs_PHPUnit_Command
         $tempFile = tempnam($config->tempDir, 'SLPHPU');
         file_put_contents($tempFile, $xml);
 
+        //  note first test file in case it causes a fatal PHP error
+        $firstTestFile = '';
+
         // Pre-populate json report when appropriate
         if (getenv('TDDIUM') && !empty($config->outputFile)) {
             $byfiles = array();
-            foreach($config->testFiles as $testFile) {
+                foreach($config->testFiles as $testFile) {
+                if (!$firstTestFile) { $firstTestFile = $testFile; }
                 $shortFilename = substr($testFile, 1 + strlen(getcwd()));
                 $byfiles[$shortFilename] = array();
             }
             $jsonData = array('byfile' => $byfiles);
             SolanoLabs_PHPUnit_Util::writeJsonToFile($config->outputFile, $jsonData);
         }
+
+        putenv("TDDIUM_LAST_TEST_FILE_STARTED=" . $firstTestFile);
 
         // Run PHPUnit
         $config->args[0] = 'vendor/phpunit/phpunit/phpunit'; // Just a placeholder
