@@ -10,8 +10,8 @@
 function solanoPHPUnitShutdown()
 {
     $error = error_get_last();
-    if ($error['type'] === E_ERROR && $outputFile = getenv('TDDIUM_OUTPUT_FILE_PROCESS')) {
-        $error['lastFile'] = getenv('TDDIUM_LAST_TEST_FILE_STARTED');
+    if ($error['type'] === E_ERROR && $outputFile = getenv('SOLANO_PHPUNIT_OUTPUT_FILE')) {
+        $error['lastFile'] = getenv('SOLANO_LAST_FILE_STARTED');
         $stripPath = getcwd();
         foreach ($error as $key => $value) {
             if (0 === strpos($error[$key], $stripPath)) {

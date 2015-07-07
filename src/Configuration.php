@@ -400,7 +400,7 @@ class SolanoLabs_PHPUnit_Configuration
 
         $this->outputFile = $file;
         // Set output file env variable in case of fatal error
-        putenv('TDDIUM_OUTPUT_FILE_PROCESS=' . $file);
+        putenv('SOLANO_PHPUNIT_OUTPUT_FILE=' . $file);
     }
 
 }

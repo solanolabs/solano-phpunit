@@ -147,7 +147,7 @@ class SolanoLabs_PHPUnit_Command
             SolanoLabs_PHPUnit_Util::writeJsonToFile($config->outputFile, $jsonData);
         }
 
-        putenv("TDDIUM_LAST_TEST_FILE_STARTED=" . $firstTestFile);
+        putenv("SOLANO_LAST_FILE_STARTED=" . $firstTestFile);
 
         // Run PHPUnit
         $config->args[0] = 'vendor/phpunit/phpunit/phpunit'; // Just a placeholder

@@ -1,4 +1,4 @@
-    <?php
+<?php
 /*
  * This file is part of Solano-PHPUnit.
  *
@@ -82,7 +82,7 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
                 $testcase['id'] = $className . '::' . $testName;
                 $testcase['file'] = $class->getFileName();
                 // Set an environment variable to the filename in case of fatal error
-                putenv("TDDIUM_LAST_TEST_FILE_STARTED=" . $testcase['file']);
+                putenv("SOLANO_LAST_FILE_STARTED=" . $testcase['file']);
                 if ($class->hasMethod($testName)) {
                     $testcase['address'] = $className . '::' . $testName;
                 } else {
