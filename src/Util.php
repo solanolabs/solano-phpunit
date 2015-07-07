@@ -265,7 +265,7 @@ class SolanoLabs_PHPUnit_Util
     public static function writeExcludesToFile($outputFile, $stripPath, $excludeFiles = array())
     {
         if (!$excludeFiles || !is_array($excludeFiles) || !count($excludeFiles)) { return; }
-        $files = self::convertOutputToUTF8($files);
+        $excludeFiles = self::convertOutputToUTF8($excludeFiles);
         $jsonData = self::readOutputFile($outputFile);
 
         if (count($excludeFiles)) {
