@@ -33,7 +33,7 @@ function solanoPHPUnitShutdown()
                         'stdout' => '',
                         'time' => 0,
                         'traceback' => array()));
-                } else {
+                } /*else {
                     $jsonData['byfile'][$testFile] = array(array(
                         'id' => $testFile,
                         'address' => $testFile,
@@ -42,7 +42,7 @@ function solanoPHPUnitShutdown()
                         'stdout' => '',
                         'time' => 0,
                         'traceback' => array()));
-                }
+                }*/
             }
         }
         SolanoLabs_PHPUnit_Util::writeJsonToFile($outputFile, $jsonData);
