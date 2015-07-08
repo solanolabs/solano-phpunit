@@ -11,41 +11,35 @@ function solanoPHPUnitShutdown()
 {
     $error = error_get_last();
     if ($error['type'] === E_ERROR && $outputFile = getenv('SOLANO_PHPUNIT_OUTPUT_FILE')) {
-        $error['lastFile'] = getenv('SOLANO_LAST_FILE_STARTED');
+        $lastFile = getenv('SOLANO_LAST_FILE_STARTED');
         $stripPath = getcwd();
         foreach ($error as $key => $value) {
             if (0 === strpos($error[$key], $stripPath)) {
                 $error[$key] = substr($error[$key], strlen($stripPath) + 1);
             }
         }
-	$error['messageLine'] = $error['file'] . ' (line ' . $error['line'] . "):\n" . $error['message'];
 
+        $messageArray = array('id' => $lastFile,
+                              'address' => $lastFile,
+                              'status' => 'error',
+                              'stderr' => 'PHP FATAL ERROR: ' . $lastFile . "\n" . $error['file'] . ' (line ' . $error['line'] . "):\n" . $error['message'],
+                              'stdout' => '',
+                              'time' => 0,
+                              'traceback' => array());
         // Load outputFile
         $jsonData = SolanoLabs_PHPUnit_Util::readOutputFile($outputFile);
-        foreach ($jsonData['byfile'] as $testFile => $data) {
-            if (is_array($data) && !count($data)) {
-                if ($testFile == $error['lastFile']) {
-                    $jsonData['byfile'][$testFile] = array(array(
-                        'id' => $error['lastFile'],
-                        'address' => $error['lastFile'],
-                        'status' => 'error',
-                        'stderr' => 'PHP FATAL ERROR: ' . $error['lastFile'] . "\n" . $error['messageLine'],
-                        'stdout' => '',
-                        'time' => 0,
-                        'traceback' => array()));
-                } /*else {
-                    $jsonData['byfile'][$testFile] = array(array(
-                        'id' => $testFile,
-                        'address' => $testFile,
-                        'status' => 'error',
-                        'stderr' => "Skipped due to PHP fatal error in:\n" . $error['messageLine'],
-                        'stdout' => '',
-                        'time' => 0,
-                        'traceback' => array()));
-                }*/
-            }
+
+        if (isset($jsonData['byfile'][$lastFile]) && count($jsonData['byfile'][$lastFile])) {
+            $jsonData['byfile'][$lastFile][] = $messageArray;
+        } else {
+            $jsonData['byfile'][$lastFile] = array($messageArray);
         }
         SolanoLabs_PHPUnit_Util::writeJsonToFile($outputFile, $jsonData);
+
+        // Restart solano-phpunit
+        $args = $_SERVER['argv'];
+        $cmd = array_shift($args);
+        pcntl_exec($cmd, $args);
     }
 }
 

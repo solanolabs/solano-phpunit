@@ -260,7 +260,8 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
      */
     public function flush()
     {
-        SolanoLabs_PHPUnit_Util::writeExcludesToFile($this->outputFile, $this->stripPath, $this->excludeFiles);
+        // No longer needed due to pre-writing excludes to json file
+        //SolanoLabs_PHPUnit_Util::writeExcludesToFile($this->outputFile, $this->stripPath, $this->excludeFiles);
     }
 }
 

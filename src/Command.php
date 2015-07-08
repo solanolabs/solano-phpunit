@@ -58,25 +58,70 @@ class SolanoLabs_PHPUnit_Command
             }
         }
 
-        // Ensure there are files to test
-        if (!count($config->testFiles)) {
-            if (count($config->excludeFiles)) {
-                echo ("Only <exclude/> designated files specified/\n");
-                $stripPath = getenv('TDDIUM_REPO_ROOT') ? getenv('TDDIUM_REPO_ROOT') : getcwd();
-                SolanoLabs_PHPUnit_Util::writeOutputFile($config->outputFile, $stripPath, $config->testFiles, $config->excludeFiles);
-                if ($exit) {
-                    exit(0);
-                } else {
-                    return true;
-                }
+        // Determine all files that should run
+        if ($config->minXmlFile) {
+            if (!count($config->testFiles)) {
+                $config->parseErrors[] = "### Error: No test files specified and no configuration file found.";
+            }
+        } else {
+            // Load file lists from xml file
+            $enumeratedFiles = SolanoLabs_PHPUnit_TestFileEnumerator::EnumerateTestFiles($config->domDoc, $config->workingDir, $config->ignoreExclude);
+
+            // If tests were supplied by the command line, use only those...else run all tests.
+            if (count($config->testFiles)) {
+                $config->excludeFiles = array_intersect($config->testFiles, $enumeratedFiles->excludeFiles);
+                $config->testFiles = array_intersect($config->testFiles, $enumeratedFiles->testFiles);
             } else {
-                if ($exit) {
-                    echo("No test files found.\n");
-                    self::usage();
-                    exit(2);
+                $config->testFiles = $enumeratedFiles->testFiles;
+            }
+        }
+
+        // Pre-populate json report when appropriate
+        $already_run_files = array();
+        if (getenv('TDDIUM') && !empty($config->outputFile)) {
+            $jsonData = SolanoLabs_PHPUnit_Util::readOutputFile($config->outputFile);
+
+            // test files
+            for ($i = count($config->testFiles) - 1; $i >= 0; $i--) {
+                $file = SolanoLabs_PHPUnit_Util::shortenFilename($config->testFiles[$i], $config->workingDir);
+                if (isset($jsonData['byfile'][$file])) {
+                    if (count($jsonData['byfile'][$file])) {
+                        // Output for this test file has already been written
+                        unset($config->testFiles[$i]);
+                        $already_run_files[] = $file;
+                    }
                 } else {
-                    return false;
+                    // There is no listing for this test file, so create one
+                    $jsonData['byfile'][$file] = array();
                 }
+            }
+
+            // Excluded files
+            for ($i = count($config->excludeFiles) - 1; $i >= 0; $i--) {
+                $shortFilename = SolanoLabs_PHPUnit_Util::shortenFilename($config->excludeFiles[$i], $config->workingDir);
+                if (isset($jsonData['byfile'][$shortFilename]) && count($jsonData['byfile'][$shortFilename])) {
+                    // Output for this excluded file has already been written
+                    unset($config->excludeFiles[$i]);
+                } else {
+                    // There is no listing for this excluded file, so create one
+                    $jsonData['byfile'][$shortFilename] = SolanoLabs_PHPUnit_Util::generateExcludeFileNotice($shortFileName, $config->excludeFiles[$i]);
+                }
+            }
+
+            SolanoLabs_PHPUnit_Util::writeJsonToFile($config->outputFile, $jsonData);
+        }
+
+        if (count($config->testFiles)) {
+            //  note first test file in case it causes a fatal PHP error
+            $filesList = array_keys($config->testFiles);
+            putenv("SOLANO_LAST_FILE_STARTED=" . SolanoLabs_PHPUnit_Util::shortenFilename($config->testFiles[$filesList[0]], $config->workingDir));
+        } else {
+            if ($exit) {
+                echo("No test files found or all test files have already been reported.\n");
+                self::usage();
+                exit(0);
+            } else {
+                return true;
             }
         }
 
@@ -131,23 +176,6 @@ class SolanoLabs_PHPUnit_Command
         $xml = SolanoLabs_PHPUnit_XmlGenerator::GenerateXml($config);
         $tempFile = tempnam($config->tempDir, 'SLPHPU');
         file_put_contents($tempFile, $xml);
-
-        //  note first test file in case it causes a fatal PHP error
-        $firstTestFile = '';
-
-        // Pre-populate json report when appropriate
-        if (getenv('TDDIUM') && !empty($config->outputFile)) {
-            $byfiles = array();
-                foreach($config->testFiles as $testFile) {
-                if (!$firstTestFile) { $firstTestFile = $testFile; }
-                $shortFilename = substr($testFile, 1 + strlen(getcwd()));
-                $byfiles[$shortFilename] = array();
-            }
-            $jsonData = array('byfile' => $byfiles);
-            SolanoLabs_PHPUnit_Util::writeJsonToFile($config->outputFile, $jsonData);
-        }
-
-        putenv("SOLANO_LAST_FILE_STARTED=" . $firstTestFile);
 
         // Run PHPUnit
         $config->args[0] = 'vendor/phpunit/phpunit/phpunit'; // Just a placeholder

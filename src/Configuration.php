@@ -89,7 +89,7 @@ class SolanoLabs_PHPUnit_Configuration
     /**
      * @var boolean
      */
-    private $minXmlFile = false;
+    public $minXmlFile = false;
 
     /**
      * Returns configuration 
@@ -120,23 +120,6 @@ class SolanoLabs_PHPUnit_Configuration
         $config->handleBootstrap();
 
         if (count($config->parseErrors)) { return $config; }
-
-        if ($config->minXmlFile) {
-            if (!count($config->testFiles)) {
-                $config->parseErrors[] = "### Error: No test files specified and no configuration file found.";
-            }
-        } else {
-            // Load file lists from xml file
-            $enumeratedFiles = SolanoLabs_PHPUnit_TestFileEnumerator::EnumerateTestFiles($config->domDoc, $config->workingDir, $config->ignoreExclude);
-
-            // If tests were supplied by the command line, use only those...else run all tests.
-            if (count($config->testFiles)) {
-                $config->excludeFiles = array_intersect($config->testFiles, $enumeratedFiles->excludeFiles);
-                $config->testFiles = array_intersect($config->testFiles, $enumeratedFiles->testFiles);
-            } else {
-                $config->testFiles = $enumeratedFiles->testFiles;
-            }
-        }
 
         // rekey args
         $trimmedArgs = array();

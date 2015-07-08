@@ -114,19 +114,69 @@ class SolanoLabs_PHPUnit_Util
     }
 
     /**
+     * Create exluded file notice
+     *
+     * @param string          $shortFilename
+     * @param string          $file
+     */
+    public static function generateExcludeFileNotice($shortFilename, $file)
+    {
+        try {
+            $fileMethods = array();
+            $declaredClasses = get_declared_classes();
+            PHPUnit_Util_Fileloader::checkAndLoad($file);
+            $newClasses = array_diff(get_declared_classes(), $declaredClasses);
+            foreach($newClasses as $className) {
+                $class = new ReflectionClass($className);
+                if ($class->implementsInterface('PHPUnit_Framework_Test')) {
+                    $methods = $class->getMethods();
+                    foreach ($methods as $method) {
+                        if (0 === strpos($method->name, 'test')) {
+                            $fileMethod = array('id' => $className . '::' . $method->name,
+                                'address' => $className . '::' . $method->name,
+                                'status' => 'skip',
+                                'stderr' => 'Skipped Test File: ' . $shortFilename . "\n" . 'Excluded by <exclude/> in configuration',
+                                'stdout' => '',
+                                'time' => 0,
+                                'traceback' => array());
+                            $fileMethods[] = $fileMethod;
+                        }
+                    }
+                }
+            }
+            if (count($fileMethods)) {
+                return array($fileMethods);
+            } else {
+                return array(array('id' => $shortFilename,
+                    'address' => $shortFilename,
+                    'status' => 'skip',
+                    'stderr' => 'Skipped Test File: ' . $shortFilename . "\n" . 'Excluded by <exclude/> and no test methods found',
+                    'stdout' => '',
+                    'time' => 0,
+                    'traceback' => array()));
+            }
+        } catch (Exception $e) {
+            return array(array('id' => $shortFilename,
+                'address' => $shortFilename,
+                'status' => 'skip',
+                'stderr' => 'Skipped Test File: ' . $shortFilename . "\n" . 'Excluded by <exclude/> in configuration and could not inspect file:' . "\n" . $e->getMessage(),
+                'stdout' => '',
+                'time' => 0,
+                'traceback' => array()));
+        }
+    }
+
+    /**
      * Create output for files that were excluded in the XML config
      *
      * @param array           $excludeFiles
      * @param string          $stripPath
      */
-    public static function generateExcludeFileNotices($excludeFiles, $stripPath)
+/*    public static function generateExcludeFileNotices($excludeFiles, $stripPath)
     {
         $skipFiles = array();
         foreach($excludeFiles as $file) {
-            $shortFilename = $file;
-            if (0 === strpos($file, $stripPath)) {
-                $shortFilename = substr($file, strlen($stripPath) + 1);
-            }
+            $file = self::shortenFilename($file, $stripPath);
             // Can we inspect the file?
             try {
                 $fileMethods = array();
@@ -142,7 +192,7 @@ class SolanoLabs_PHPUnit_Util
                                 $fileMethod = array('id' => $className . '::' . $method->name,
                                     'address' => $className . '::' . $method->name,
                                     'status' => 'skip',
-                                    'stderr' => 'Skipped Test File: ' . $shortFilename . "\n" . 'Excluded by <exclude/> in configuration',
+                                    'stderr' => 'Skipped Test File: ' . $file . "\n" . 'Excluded by <exclude/> in configuration',
                                     'stdout' => '',
                                     'time' => 0,
                                     'traceback' => array());
@@ -152,21 +202,21 @@ class SolanoLabs_PHPUnit_Util
                     }
                 }
                 if (count($fileMethods)) {
-                    $skipFiles[$shortFilename] = $fileMethods;
+                    $skipFiles[$file] = $fileMethods;
                 } else {
-                    $skipFiles[$shortFilename] = array(array('id' => $shortFilename,
-                        'address' => $shortFilename,
+                    $skipFiles[$file] = array(array('id' => $file,
+                        'address' => $file,
                         'status' => 'skip',
-                        'stderr' => 'Skipped Test File: ' . $shortFilename . "\n" . 'Excluded by <exclude/> and no test methods found',
+                        'stderr' => 'Skipped Test File: ' . $file . "\n" . 'Excluded by <exclude/> and no test methods found',
                         'stdout' => '',
                         'time' => 0,
                         'traceback' => array()));
                 }
             } catch (Exception $e) {
-                $skipFiles[$shortFilename] = array(array('id' => $shortFilename,
-                    'address' => $shortFilename,
+                $skipFiles[$file] = array(array('id' => $file,
+                    'address' => $file,
                     'status' => 'skip',
-                    'stderr' => 'Skipped Test File: ' . $shortFilename . "\n" . 'Excluded by <exclude/> in configuration and could not inspect file:' . "\n" . $e->getMessage(),
+                    'stderr' => 'Skipped Test File: ' . $file . "\n" . 'Excluded by <exclude/> in configuration and could not inspect file:' . "\n" . $e->getMessage(),
                     'stdout' => '',
                     'time' => 0,
                     'traceback' => array()));
@@ -175,7 +225,7 @@ class SolanoLabs_PHPUnit_Util
         }
         return $skipFiles;
     }
-
+*/
     /**
      * Read output file.
      *
@@ -186,14 +236,13 @@ class SolanoLabs_PHPUnit_Util
         if (!file_exists($outputFile)) {
             return array('byfile' => array());
         } else {
-            $json = json_decode(file_get_contents($outputFile), true);
-            if (is_null($json) || !isset($json['byfile']) || !is_array($json['byfile'])) {
+            $jsonData = json_decode(file_get_contents($outputFile), true);
+            if (is_null($jsonData) || !isset($jsonData['byfile']) || !is_array($jsonData['byfile'])) {
                 echo("### ERROR: JSON data could not be read from " . $outputFile . "\n");
-                unlink($outputFile);
-                return array('byfile' => array());
-            } else {
-                return $json;
+                $jsonData = array('byfile' => array());
+                self::writeJsonToFile($jsonData);
             }
+            return $jsonData;
         }
     }
 
@@ -205,7 +254,7 @@ class SolanoLabs_PHPUnit_Util
      * @param array           $files
      * @param array           $excludeFiles
      */
-    public static function writeOutputFile($outputFile, $stripPath, $files = array(), $excludeFiles = array())
+/*    public static function writeOutputFile($outputFile, $stripPath, $files = array(), $excludeFiles = array())
     {
         $files = self::convertOutputToUTF8($files);
         $jsonData = self::readOutputFile($outputFile);
@@ -219,7 +268,7 @@ class SolanoLabs_PHPUnit_Util
 
         self::writeJsonToFile($outputFile, $jsonData);
     }
-
+*/
     /**
      * Convert to utf8
      *
@@ -262,7 +311,7 @@ class SolanoLabs_PHPUnit_Util
      * Add excluded files to output file
      *
      */
-    public static function writeExcludesToFile($outputFile, $stripPath, $excludeFiles = array())
+/*    public static function writeExcludesToFile($outputFile, $stripPath, $excludeFiles = array())
     {
         if (!$excludeFiles || !is_array($excludeFiles) || !count($excludeFiles)) { return; }
         $excludeFiles = self::convertOutputToUTF8($excludeFiles);
@@ -274,7 +323,7 @@ class SolanoLabs_PHPUnit_Util
 
         self::writeJsonToFile($outputFile, $jsonData);
     }
-
+*/
     /** 
      * flush to file
      */
@@ -284,5 +333,19 @@ class SolanoLabs_PHPUnit_Util
         if (!defined('JSON_PRETTY_PRINT')) { define('JSON_PRETTY_PRINT', 128); } // JSON_PRETTY_PRINT available since PHP 5.4.0
         fwrite($file, str_replace('\/', '/', json_encode($jsonData, JSON_PRETTY_PRINT))); // unescape the json_encode slashes
         fclose($file);
+    }
+
+    /**
+     * Return shorten path name
+     */
+    public static function shortenFilename($file, $stripPath = '')
+    {
+        if (!$stripPath) {
+            $stripPath = getcwd();
+        }
+        if (0 === strpos($file, $stripPath)) {
+            $file = substr($file, strlen($stripPath) + 1);
+        }
+        return $file;
     }
 }
