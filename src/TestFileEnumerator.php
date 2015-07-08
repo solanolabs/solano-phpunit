@@ -49,17 +49,15 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
     /**
      * Find all tests specified in a PHPUnit XML configuration file.
      *
-     * @param DOMDocument         $test
-     * @param string              $workingDir
-     * @param boolean             $ignoreExclude
+     * @param SolanoLabs_PHPUnit_Configuration         $config
      */
-    public static function EnumerateTestFiles($domDoc, $workingDir, $ignoreExclude = false)
+    public static function EnumerateTestFiles(&$config)//$domDoc, $workingDir, $ignoreExclude = false)
     {
         $enumerator = new static;
-        $enumerator->setWorkingDir($workingDir);
-        $enumerator->domDoc = $domDoc;
+        $enumerator->setWorkingDir($config->workingDir);
+        $enumerator->domDoc = $config->domDoc;
         $enumerator->xpath = new DOMXPath($enumerator->domDoc);
-        $enumerator->ignoreExclude = $ignoreExclude;
+        $enumerator->ignoreExclude = $config->ignoreExclude;
 
         $testSuiteNodes = $enumerator->xpath->query('//testsuites/testsuite');
 
@@ -75,11 +73,19 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
             $enumerator->extractTestFiles($testSuiteNode);
         }
         $enumerator->testFiles = array_unique($enumerator->testFiles);
-        sort($enumerator->testFiles);
         $enumerator->excludeFiles = array_unique($enumerator->excludeFiles);
-        sort($enumerator->excludeFiles);
 
-        return $enumerator;
+        // If tests were supplied by the command line, use only those...else include all tests.
+        if (count($config->testFiles)) {
+            $config->excludeFiles = array_intersect($config->testFiles, $enumerator->excludeFiles);
+            $config->testFiles = array_intersect($config->testFiles, $enumerator->testFiles);
+        } else {
+            $config->testFiles = $enumerator->testFiles;
+            $config->excludeFiles = $enumerator->excludeFiles;
+        }
+
+        sort($config->testFiles);
+        sort($config->excludeFiles);
     }
 
     /**
@@ -133,7 +139,6 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
             }
         }
         if (!count($files)) { return; }
-
         // Should some files be excluded?
         if (!$this->ignoreExclude && count($excludePaths)) {
             for ($i = count($files) - 1; $i >= 0; $i--) {

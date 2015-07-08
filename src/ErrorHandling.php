@@ -19,27 +19,48 @@ function solanoPHPUnitShutdown()
             }
         }
 
+        $backtrace = $error['file'] . ' (line ' . $error['line'] . "):\n" . $error['message'];
+
         $messageArray = array('id' => $lastFile,
                               'address' => $lastFile,
                               'status' => 'error',
-                              'stderr' => 'PHP FATAL ERROR: ' . $lastFile . "\n" . $error['file'] . ' (line ' . $error['line'] . "):\n" . $error['message'],
+                              'stderr' => 'PHP FATAL ERROR: ' . $lastFile . "\n" . $backtrace,
                               'stdout' => '',
                               'time' => 0,
                               'traceback' => array());
-        // Load outputFile
-        $jsonData = SolanoLabs_PHPUnit_Util::readOutputFile($outputFile);
+        // Write the error to the JSON file
+        $jsonData = SolanoLabs_PHPUnit_JsonReporter::readOutputFile($outputFile);
 
         if (isset($jsonData['byfile'][$lastFile]) && count($jsonData['byfile'][$lastFile])) {
             $jsonData['byfile'][$lastFile][] = $messageArray;
         } else {
             $jsonData['byfile'][$lastFile] = array($messageArray);
         }
-        SolanoLabs_PHPUnit_Util::writeJsonToFile($outputFile, $jsonData);
+        SolanoLabs_PHPUnit_JsonReporter::writeJsonToFile($outputFile, $jsonData);
 
-        // Restart solano-phpunit
-        $args = $_SERVER['argv'];
-        $cmd = array_shift($args);
-        pcntl_exec($cmd, $args);
+        // Can the process be restarted?
+        if (function_exists('pcntl_exec')) {
+            // Store a non-zero exit code so the replacement process doesn't "pass"
+            putenv('SOLANO_PHPUNIT_EXIT_CODE=6');
+            $args = $_SERVER['argv'];
+            $cmd = array_shift($args);
+            pcntl_exec($cmd, $args);
+        } else {
+            // Can't restart the process, so populate JSON with errors (so they don't get marked as skipped)
+            $jsonData = SolanoLabs_PHPUnit_JsonReporter::readOutputFile($outputFile);
+            foreach($jsonData['byfile'] as $file => $data) {
+                if (!is_array($data) || !count($data)) {
+                    $jsonData['byfile'][$file] = array(array('id' => $file,
+                                                             'address' => $file,
+                                                             'status' => 'error',
+                                                             'stderr' => $file . " was not run due to:\nPHP FATAL ERROR: " . $lastFile . "\n" . $backtrace,
+                                                             'stdout' => '',
+                                                             'time' => 0,
+                                                             'traceback' => array()));
+                }
+            }
+            SolanoLabs_PHPUnit_JsonReporter::writeJsonToFile($outputFile, $jsonData);
+        }
     }
 }
 

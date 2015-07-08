@@ -65,25 +65,17 @@ class SolanoLabs_PHPUnit_Command
             }
         } else {
             // Load file lists from xml file
-            $enumeratedFiles = SolanoLabs_PHPUnit_TestFileEnumerator::EnumerateTestFiles($config->domDoc, $config->workingDir, $config->ignoreExclude);
-
-            // If tests were supplied by the command line, use only those...else run all tests.
-            if (count($config->testFiles)) {
-                $config->excludeFiles = array_intersect($config->testFiles, $enumeratedFiles->excludeFiles);
-                $config->testFiles = array_intersect($config->testFiles, $enumeratedFiles->testFiles);
-            } else {
-                $config->testFiles = $enumeratedFiles->testFiles;
-            }
+            SolanoLabs_PHPUnit_TestFileEnumerator::EnumerateTestFiles($config);
         }
 
         // Pre-populate json report when appropriate
         $already_run_files = array();
         if (getenv('TDDIUM') && !empty($config->outputFile)) {
-            $jsonData = SolanoLabs_PHPUnit_Util::readOutputFile($config->outputFile);
+            $jsonData = SolanoLabs_PHPUnit_JsonReporter::readOutputFile($config->outputFile);
 
             // test files
             for ($i = count($config->testFiles) - 1; $i >= 0; $i--) {
-                $file = SolanoLabs_PHPUnit_Util::shortenFilename($config->testFiles[$i], $config->workingDir);
+                $file = SolanoLabs_PHPUnit_Util::shortenFilename($config->testFiles[$i]);//, $config->workingDir);
                 if (isset($jsonData['byfile'][$file])) {
                     if (count($jsonData['byfile'][$file])) {
                         // Output for this test file has already been written
@@ -98,17 +90,17 @@ class SolanoLabs_PHPUnit_Command
 
             // Excluded files
             for ($i = count($config->excludeFiles) - 1; $i >= 0; $i--) {
-                $shortFilename = SolanoLabs_PHPUnit_Util::shortenFilename($config->excludeFiles[$i], $config->workingDir);
+                $shortFilename = SolanoLabs_PHPUnit_Util::shortenFilename($config->excludeFiles[$i]);//, $config->workingDir);
                 if (isset($jsonData['byfile'][$shortFilename]) && count($jsonData['byfile'][$shortFilename])) {
                     // Output for this excluded file has already been written
                     unset($config->excludeFiles[$i]);
                 } else {
                     // There is no listing for this excluded file, so create one
-                    $jsonData['byfile'][$shortFilename] = SolanoLabs_PHPUnit_Util::generateExcludeFileNotice($shortFileName, $config->excludeFiles[$i]);
+                    $jsonData['byfile'][$shortFilename] = SolanoLabs_PHPUnit_JsonReporter::generateExcludeFileNotice($shortFilename);
                 }
             }
 
-            SolanoLabs_PHPUnit_Util::writeJsonToFile($config->outputFile, $jsonData);
+            SolanoLabs_PHPUnit_JsonReporter::writeJsonToFile($config->outputFile, $jsonData);
         }
 
         if (count($config->testFiles)) {
@@ -158,6 +150,15 @@ class SolanoLabs_PHPUnit_Command
                  "\n#####################\n");
         }
 
+        // If this is a replacement/continuation of a failed process, exit with its code
+        if ($setExitCode = getenv('SOLANO_PHPUNIT_EXIT_CODE')) {
+            if ($exit) {
+                exit($setExitCode);
+            } else {
+                return false;
+            }
+        }
+
         if ($exit) {
             exit($exitCode);
         } elseif ($exitCode) {
@@ -186,7 +187,7 @@ class SolanoLabs_PHPUnit_Command
 
         // Add skip notices if group excludes are in place
         if (getenv('TDDIUM') && !empty($config->outputFile)) {
-            $jsonData = SolanoLabs_PHPUnit_Util::readOutputFile($config->outputFile);
+            $jsonData = SolanoLabs_PHPUnit_JsonReporter::readOutputFile($config->outputFile);
             foreach($config->testFiles as $testFile) {
                 $shortFilename = substr($testFile, 1 + strlen(getcwd()));
                 if (empty($jsonData['byfile'][$shortFilename])) {
@@ -202,13 +203,12 @@ class SolanoLabs_PHPUnit_Command
                 }
             }
 
-            SolanoLabs_PHPUnit_Util::writeJsonToFile($config->outputFile, $jsonData);
+            SolanoLabs_PHPUnit_JsonReporter::writeJsonToFile($config->outputFile, $jsonData);
         }
 
 
         // Delete temporary XML file
         unlink($tempFile);
-
         return $exitCode;
     }
 

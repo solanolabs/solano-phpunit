@@ -250,19 +250,10 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
         }
         $this->files[$file][] = $testcase;
         // Flush test to report
-        SolanoLabs_PHPUnit_Util::writeTestcaseToFile($this->outputFile, $file, $testcase);
+        SolanoLabs_PHPUnit_JsonReporter::writeTestcaseToFile($this->outputFile, $file, $testcase);
 
     }
 
-    /**
-     * Finish writing output file.
-     * Called by PHPUnit_Framework_TestResult::flushListeners()
-     */
-    public function flush()
-    {
-        // No longer needed due to pre-writing excludes to json file
-        //SolanoLabs_PHPUnit_Util::writeExcludesToFile($this->outputFile, $this->stripPath, $this->excludeFiles);
-    }
 }
 
 endif;
