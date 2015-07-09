@@ -11,7 +11,7 @@ function solanoPHPUnitShutdown()
 {
     $error = error_get_last();
     if ($error['type'] === E_ERROR && $outputFile = getenv('SOLANO_PHPUNIT_OUTPUT_FILE')) {
-        $lastFile = getenv('SOLANO_LAST_FILE_STARTED');
+        $lastFile = SolanoLabs_PHPUnit_Util::shortenFilename(getenv('SOLANO_LAST_FILE_STARTED'));
         $stripPath = getcwd();
         foreach ($error as $key => $value) {
             if (0 === strpos($error[$key], $stripPath)) {
@@ -21,13 +21,14 @@ function solanoPHPUnitShutdown()
 
         $backtrace = $error['file'] . ' (line ' . $error['line'] . "):\n" . $error['message'];
 
-        $messageArray = array('id' => $lastFile,
-                              'address' => $lastFile,
-                              'status' => 'error',
-                              'stderr' => 'PHP FATAL ERROR: ' . $lastFile . "\n" . $backtrace,
-                              'stdout' => '',
-                              'time' => 0,
-                              'traceback' => array());
+        $messageArray = array(
+            'id' => $lastFile,
+            'address' => $lastFile,
+            'status' => 'error',
+            'stderr' => 'PHP FATAL ERROR: ' . $lastFile . "\n" . $backtrace,
+            'stdout' => '',
+            'time' => 0,
+            'traceback' => array());
         // Write the error to the JSON file
         $jsonData = SolanoLabs_PHPUnit_JsonReporter::readOutputFile($outputFile);
 
@@ -50,13 +51,14 @@ function solanoPHPUnitShutdown()
             $jsonData = SolanoLabs_PHPUnit_JsonReporter::readOutputFile($outputFile);
             foreach($jsonData['byfile'] as $file => $data) {
                 if (!is_array($data) || !count($data)) {
-                    $jsonData['byfile'][$file] = array(array('id' => $file,
-                                                             'address' => $file,
-                                                             'status' => 'error',
-                                                             'stderr' => $file . " was not run due to:\nPHP FATAL ERROR: " . $lastFile . "\n" . $backtrace,
-                                                             'stdout' => '',
-                                                             'time' => 0,
-                                                             'traceback' => array()));
+                    $jsonData['byfile'][$file] = array(array(
+                        'id' => $file,
+                        'address' => $file,
+                        'status' => 'error',
+                        'stderr' => $file . " was not run due to:\nPHP FATAL ERROR: " . $lastFile . "\n" . $backtrace,
+                        'stdout' => '',
+                        'time' => 0,
+                        'traceback' => array()));
                 }
             }
             SolanoLabs_PHPUnit_JsonReporter::writeJsonToFile($outputFile, $jsonData);
