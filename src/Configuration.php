@@ -195,6 +195,7 @@ class SolanoLabs_PHPUnit_Configuration
         }
         $this->cliTestFiles = array_unique($this->cliTestFiles);
         sort($this->cliTestFiles);
+        $this->testFiles = $this->cliTestFiles;
     }
 
     /**
