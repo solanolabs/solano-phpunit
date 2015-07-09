@@ -49,6 +49,11 @@ class SolanoLabs_PHPUnit_Configuration
     /**
      * @var array
      */
+    public $cliTestFiles = array();
+
+    /**
+     * @var array
+     */
     public $excludeFiles = array();
 
     /**
@@ -181,13 +186,15 @@ class SolanoLabs_PHPUnit_Configuration
                     if (!file_exists($file)) {
                         $this->parseErrors[] = "### Error: File does not exist: " . $file;
                     } else {
-                        $this->testFiles[] = $file;
+                        $this->cliTestFiles[] = $file;
                     }
                 }
                 unset($this->args[1 + $key]);
                 unset($this->args[$key]);
             }
         }
+        $this->cliTestFiles = array_unique($this->cliTestFiles);
+        sort($this->cliTestFiles);
     }
 
     /**

@@ -74,21 +74,19 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
             if ($config->testsuiteFilter && $testSuiteNode->getAttribute('name') != $config->testsuiteFilter) {
                 continue;
             }
-
             $enumerator->extractTestFiles($testSuiteNode);
         }
         $enumerator->testFiles = array_unique($enumerator->testFiles);
         $enumerator->excludeFiles = array_unique($enumerator->excludeFiles);
 
         // If tests were supplied by the command line, use only those...else include all tests.
-        if (count($config->testFiles)) {
-            $config->excludeFiles = array_intersect($config->testFiles, $enumerator->excludeFiles);
-            $config->testFiles = array_intersect($config->testFiles, $enumerator->testFiles);
+        if (count($config->cliTestFiles)) {
+            $config->excludeFiles = array_intersect($config->cliTestFiles, $enumerator->excludeFiles);
+            $config->testFiles = array_intersect($config->cliTestFiles, $enumerator->testFiles);
         } else {
             $config->testFiles = $enumerator->testFiles;
             $config->excludeFiles = $enumerator->excludeFiles;
         }
-
         sort($config->testFiles);
         sort($config->excludeFiles);
     }

@@ -90,13 +90,30 @@ class SolanoLabs_PHPUnit_Command
 
             // Excluded files
             for ($i = count($config->excludeFiles) - 1; $i >= 0; $i--) {
-                $shortFilename = SolanoLabs_PHPUnit_Util::shortenFilename($config->excludeFiles[$i]);//, $config->workingDir);
+                $shortFilename = SolanoLabs_PHPUnit_Util::shortenFilename($config->excludeFiles[$i]);
                 if (isset($jsonData['byfile'][$shortFilename]) && count($jsonData['byfile'][$shortFilename])) {
                     // Output for this excluded file has already been written
                     unset($config->excludeFiles[$i]);
                 } else {
                     // There is no listing for this excluded file, so create one
                     $jsonData['byfile'][$shortFilename] = SolanoLabs_PHPUnit_JsonReporter::generateExcludeFileNotice($shortFilename);
+                }
+            }
+
+            // Cli specified files that are not in test or excluded files
+            foreach ($config->cliTestFiles as $file) {
+                if (!in_array($file, $config->testFiles) && !in_array($file, $config->excludeFiles)) {
+                    $shortFilename = SolanoLabs_PHPUnit_Util::shortenFilename($file);
+                    if (empty($jsonData['byfile'][$shortFilename])) {
+                        $jsonData['byfile'][$shortFilename] = array(array(
+                        'id' => $shortFilename,
+                            'address' => $shortFilename,
+                            'status' => 'skip',
+                            'stderr' => 'Skipped Test File: ' . $shortFilename . "\n" . 'Due to --group, --exclude-group, or --testsuite flags',
+                            'stdout' => '',
+                            'time' => 0,
+                            'traceback' => array()));
+                    }
                 }
             }
 
@@ -185,10 +202,12 @@ class SolanoLabs_PHPUnit_Command
         $phpUnit = new PHPUnit_TextUI_Command();
         $exitCode = $phpUnit->run($config->args, false);
 
-        // Add skip notices if group excludes are in place
+        // Add skip notices if group/testsuite filters are in use
         if (getenv('TDDIUM') && !empty($config->outputFile)) {
             $jsonData = SolanoLabs_PHPUnit_JsonReporter::readOutputFile($config->outputFile);
-            foreach($config->testFiles as $testFile) {
+            $allTestFiles = array_unique(array_merge($config->testFiles, $config->cliTestFiles));
+            sort($allTestFiles);
+            foreach($allTestFiles as $testFile) {
                 $shortFilename = substr($testFile, 1 + strlen(getcwd()));
                 if (empty($jsonData['byfile'][$shortFilename])) {
                     // All tests in file were skipped
