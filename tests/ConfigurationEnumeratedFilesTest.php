@@ -49,6 +49,13 @@ class Solano_PHPUnit_Wrapper_ConfigurationEnumeratedFiles_Test extends PHPUnit_F
         $config = SolanoLabs_PHPUnit_Configuration::parseArgs($args);
         SolanoLabs_PHPUnit_TestFileEnumerator::EnumerateTestFiles($config);
         $this->assertEquals(0, count($config->testFiles));
+
+        $args = array('', 
+                      '--testsuite', 'testsuite_2', 
+                      '--configuration', 'tests' . DIRECTORY_SEPARATOR . '_files' . DIRECTORY_SEPARATOR . 'named_testsuites.xml');
+        $config = SolanoLabs_PHPUnit_Configuration::parseArgs($args);
+        SolanoLabs_PHPUnit_TestFileEnumerator::EnumerateTestFiles($config);
+        $this->assertEquals(2, count($config->testFiles));
     }
 
     public function testEnumerateTestFilesIgnoreExclude()

@@ -92,6 +92,11 @@ class SolanoLabs_PHPUnit_Configuration
     public $minXmlFile = false;
 
     /**
+     * @var sting
+     */
+    public $testsuiteFilter = '';
+
+    /**
      * Returns configuration 
      *
      * @param  array                     $args
@@ -113,6 +118,7 @@ class SolanoLabs_PHPUnit_Configuration
         $config->setOutputFile();
         $config->checkSplit();
         $config->checkIgnoreExclude();
+        $config->checkTestsuiteOption();
 
         if (count($config->parseErrors)) { return $config; }
 
@@ -326,6 +332,22 @@ class SolanoLabs_PHPUnit_Configuration
     }
 
     /**
+     * Was a --testsuite supplied?
+     */
+    private function checkTestsuiteOption()
+    {
+        if ($key = array_search('--testsuite', $this->args)) {
+            if (!isset($this->args[1 + $key])) {
+                $this->parseErrors[] = "### Error: No --testsuite pattern specified";
+            } else {
+                $this->testsuiteFilter = $this->args[1 + $key];
+                unset($this->args[1 + $key]);
+                unset($this->args[$key]);
+            }
+        }
+    }
+
+    /**
      * Extracts type and target from <log type="" target="" /> nodes in the phpunit config file
      */
     private function findLogTargets()
@@ -385,5 +407,4 @@ class SolanoLabs_PHPUnit_Configuration
         // Set output file env variable in case of fatal error
         putenv('SOLANO_PHPUNIT_OUTPUT_FILE=' . $file);
     }
-
 }

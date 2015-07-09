@@ -70,6 +70,11 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
         }
 
         foreach ($testSuiteNodes as $testSuiteNode) {
+            // If a --testsuite was specified, only use that one
+            if ($config->testsuiteFilter && $testSuiteNode->getAttribute('name') != $config->testsuiteFilter) {
+                continue;
+            }
+
             $enumerator->extractTestFiles($testSuiteNode);
         }
         $enumerator->testFiles = array_unique($enumerator->testFiles);

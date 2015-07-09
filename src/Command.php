@@ -196,7 +196,7 @@ class SolanoLabs_PHPUnit_Command
                         'id' => $shortFilename,
                         'address' => $shortFilename,
                         'status' => 'skip',
-                        'stderr' => 'Skipped Test File: ' . $shortFilename . "\n" . 'All tests excluded by --[exclude-]group',
+                        'stderr' => 'Skipped Test File: ' . $shortFilename . "\n" . 'Due to --group, --exclude-group, or --testsuite flags',
                         'stdout' => '',
                         'time' => 0,
                         'traceback' => array()));
