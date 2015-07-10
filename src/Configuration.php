@@ -49,6 +49,11 @@ class SolanoLabs_PHPUnit_Configuration
     /**
      * @var array
      */
+    public $cliTestFiles = array();
+
+    /**
+     * @var array
+     */
     public $excludeFiles = array();
 
     /**
@@ -89,7 +94,12 @@ class SolanoLabs_PHPUnit_Configuration
     /**
      * @var boolean
      */
-    private $minXmlFile = false;
+    public $minXmlFile = false;
+
+    /**
+     * @var sting
+     */
+    public $testsuiteFilter = '';
 
     /**
      * Returns configuration 
@@ -113,6 +123,7 @@ class SolanoLabs_PHPUnit_Configuration
         $config->setOutputFile();
         $config->checkSplit();
         $config->checkIgnoreExclude();
+        $config->checkTestsuiteOption();
 
         if (count($config->parseErrors)) { return $config; }
 
@@ -120,23 +131,6 @@ class SolanoLabs_PHPUnit_Configuration
         $config->handleBootstrap();
 
         if (count($config->parseErrors)) { return $config; }
-
-        if ($config->minXmlFile) {
-            if (!count($config->testFiles)) {
-                $config->parseErrors[] = "### Error: No test files specified and no configuration file found.";
-            }
-        } else {
-            // Load file lists from xml file
-            $enumeratedFiles = SolanoLabs_PHPUnit_TestFileEnumerator::EnumerateTestFiles($config->domDoc, $config->workingDir, $config->ignoreExclude);
-
-            // If tests were supplied by the command line, use only those...else run all tests.
-            if (count($config->testFiles)) {
-                $config->excludeFiles = array_intersect($config->testFiles, $enumeratedFiles->excludeFiles);
-                $config->testFiles = array_intersect($config->testFiles, $enumeratedFiles->testFiles);
-            } else {
-                $config->testFiles = $enumeratedFiles->testFiles;
-            }
-        }
 
         // rekey args
         $trimmedArgs = array();
@@ -192,13 +186,16 @@ class SolanoLabs_PHPUnit_Configuration
                     if (!file_exists($file)) {
                         $this->parseErrors[] = "### Error: File does not exist: " . $file;
                     } else {
-                        $this->testFiles[] = $file;
+                        $this->cliTestFiles[] = $file;
                     }
                 }
                 unset($this->args[1 + $key]);
                 unset($this->args[$key]);
             }
         }
+        $this->cliTestFiles = array_unique($this->cliTestFiles);
+        sort($this->cliTestFiles);
+        $this->testFiles = $this->cliTestFiles;
     }
 
     /**
@@ -343,6 +340,22 @@ class SolanoLabs_PHPUnit_Configuration
     }
 
     /**
+     * Was a --testsuite supplied?
+     */
+    private function checkTestsuiteOption()
+    {
+        if ($key = array_search('--testsuite', $this->args)) {
+            if (!isset($this->args[1 + $key])) {
+                $this->parseErrors[] = "### Error: No --testsuite pattern specified";
+            } else {
+                $this->testsuiteFilter = $this->args[1 + $key];
+                unset($this->args[1 + $key]);
+                unset($this->args[$key]);
+            }
+        }
+    }
+
+    /**
      * Extracts type and target from <log type="" target="" /> nodes in the phpunit config file
      */
     private function findLogTargets()
@@ -399,6 +412,7 @@ class SolanoLabs_PHPUnit_Configuration
         }
 
         $this->outputFile = $file;
+        // Set output file env variable in case of fatal error
+        putenv('SOLANO_PHPUNIT_OUTPUT_FILE=' . $file);
     }
-
 }

@@ -58,25 +58,79 @@ class SolanoLabs_PHPUnit_Command
             }
         }
 
-        // Ensure there are files to test
-        if (!count($config->testFiles)) {
-            if (count($config->excludeFiles)) {
-                echo ("Only <exclude/> designated files specified/\n");
-                $stripPath = getenv('TDDIUM_REPO_ROOT') ? getenv('TDDIUM_REPO_ROOT') : getcwd();
-                SolanoLabs_PHPUnit_Util::writeOutputFile($config->outputFile, $stripPath, $config->testFiles, $config->excludeFiles);
-                if ($exit) {
-                    exit(0);
+        // Determine all files that should run
+        if ($config->minXmlFile) {
+            if (!count($config->testFiles)) {
+                $config->parseErrors[] = "### Error: No test files specified and no configuration file found.";
+            }
+        } else {
+            // Load file lists from xml file
+            SolanoLabs_PHPUnit_TestFileEnumerator::EnumerateTestFiles($config);
+        }
+
+        // Pre-populate json report when appropriate
+        $already_run_files = array();
+        if (getenv('TDDIUM') && !empty($config->outputFile)) {
+            $jsonData = SolanoLabs_PHPUnit_JsonReporter::readOutputFile($config->outputFile);
+
+            // test files
+            for ($i = count($config->testFiles) - 1; $i >= 0; $i--) {
+                $file = SolanoLabs_PHPUnit_Util::shortenFilename($config->testFiles[$i]);//, $config->workingDir);
+                if (isset($jsonData['byfile'][$file])) {
+                    if (count($jsonData['byfile'][$file])) {
+                        // Output for this test file has already been written
+                        unset($config->testFiles[$i]);
+                        $already_run_files[] = $file;
+                    }
                 } else {
-                    return true;
+                    // There is no listing for this test file, so create one
+                    $jsonData['byfile'][$file] = array();
                 }
+            }
+
+            // Excluded files
+            for ($i = count($config->excludeFiles) - 1; $i >= 0; $i--) {
+                $shortFilename = SolanoLabs_PHPUnit_Util::shortenFilename($config->excludeFiles[$i]);
+                if (isset($jsonData['byfile'][$shortFilename]) && count($jsonData['byfile'][$shortFilename])) {
+                    // Output for this excluded file has already been written
+                    unset($config->excludeFiles[$i]);
+                } else {
+                    // There is no listing for this excluded file, so create one
+                    $jsonData['byfile'][$shortFilename] = SolanoLabs_PHPUnit_JsonReporter::generateExcludeFileNotice($shortFilename);
+                }
+            }
+
+            // Cli specified files that are not in test or excluded files
+            foreach ($config->cliTestFiles as $file) {
+                if (!in_array($file, $config->testFiles) && !in_array($file, $config->excludeFiles)) {
+                    $shortFilename = SolanoLabs_PHPUnit_Util::shortenFilename($file);
+                    if (empty($jsonData['byfile'][$shortFilename])) {
+                        $jsonData['byfile'][$shortFilename] = array(array(
+                        'id' => $shortFilename,
+                            'address' => $shortFilename,
+                            'status' => 'skip',
+                            'stderr' => 'Skipped Test File: ' . $shortFilename . "\n" . 'Due to --group, --exclude-group, or --testsuite flags',
+                            'stdout' => '',
+                            'time' => 0,
+                            'traceback' => array()));
+                    }
+                }
+            }
+
+            SolanoLabs_PHPUnit_JsonReporter::writeJsonToFile($config->outputFile, $jsonData);
+        }
+
+        if (count($config->testFiles)) {
+            //  note first test file in case it causes a fatal PHP error
+            $filesList = array_keys($config->testFiles);
+            putenv("SOLANO_LAST_FILE_STARTED=" . SolanoLabs_PHPUnit_Util::shortenFilename($config->testFiles[$filesList[0]], $config->workingDir));
+        } else {
+            if ($exit) {
+                echo("No test files found or all test files have already been reported.\n");
+                self::usage();
+                exit(0);
             } else {
-                if ($exit) {
-                    echo("No test files found.\n");
-                    self::usage();
-                    exit(2);
-                } else {
-                    return false;
-                }
+                return true;
             }
         }
 
@@ -113,6 +167,15 @@ class SolanoLabs_PHPUnit_Command
                  "\n#####################\n");
         }
 
+        // If this is a replacement/continuation of a failed process, exit with its code
+        if ($setExitCode = getenv('SOLANO_PHPUNIT_EXIT_CODE')) {
+            if ($exit) {
+                exit($setExitCode);
+            } else {
+                return false;
+            }
+        }
+
         if ($exit) {
             exit($exitCode);
         } elseif ($exitCode) {
@@ -139,10 +202,12 @@ class SolanoLabs_PHPUnit_Command
         $phpUnit = new PHPUnit_TextUI_Command();
         $exitCode = $phpUnit->run($config->args, false);
 
-        // Add skip notices if group excludes are in place
+        // Add skip notices if group/testsuite filters are in use
         if (getenv('TDDIUM') && !empty($config->outputFile)) {
-            $jsonData = SolanoLabs_PHPUnit_Util::readOutputFile($config->outputFile);
-            foreach($config->testFiles as $testFile) {
+            $jsonData = SolanoLabs_PHPUnit_JsonReporter::readOutputFile($config->outputFile);
+            $allTestFiles = array_unique(array_merge($config->testFiles, $config->cliTestFiles));
+            sort($allTestFiles);
+            foreach($allTestFiles as $testFile) {
                 $shortFilename = substr($testFile, 1 + strlen(getcwd()));
                 if (empty($jsonData['byfile'][$shortFilename])) {
                     // All tests in file were skipped
@@ -150,22 +215,19 @@ class SolanoLabs_PHPUnit_Command
                         'id' => $shortFilename,
                         'address' => $shortFilename,
                         'status' => 'skip',
-                        'stderr' => 'Skipped Test File: ' . $shortFilename . "\n" . 'All tests excluded by --[exclude-]group',
+                        'stderr' => 'Skipped Test File: ' . $shortFilename . "\n" . 'Due to --group, --exclude-group, or --testsuite flags',
                         'stdout' => '',
                         'time' => 0,
                         'traceback' => array()));
                 }
             }
-            $file = fopen($config->outputFile, 'w');
-            if (!defined('JSON_PRETTY_PRINT')) { define('JSON_PRETTY_PRINT', 128); } // JSON_PRETTY_PRINT available since PHP 5.4.0
-            fwrite($file, json_encode($jsonData, JSON_PRETTY_PRINT));
-            fclose($file);
+
+            SolanoLabs_PHPUnit_JsonReporter::writeJsonToFile($config->outputFile, $jsonData);
         }
 
 
         // Delete temporary XML file
         unlink($tempFile);
-
         return $exitCode;
     }
 

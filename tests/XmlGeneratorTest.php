@@ -9,6 +9,7 @@ class Solano_PHPUnit_Wrapper_XmlGenerator_Test extends PHPUnit_Framework_TestCas
     {
         $args = array('', '--configuration', 'tests' . DIRECTORY_SEPARATOR . '_files' . DIRECTORY_SEPARATOR . 'xml_generator.xml');
         $this->config = SolanoLabs_PHPUnit_Configuration::parseArgs($args);
+        SolanoLabs_PHPUnit_TestFileEnumerator::EnumerateTestFiles($this->config);
         $xml = SolanoLabs_PHPUnit_XmlGenerator::GenerateXml($this->config);
         $this->domDoc = new DOMDocument();
         $this->domDoc->loadXML($xml);

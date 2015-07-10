@@ -1,4 +1,4 @@
-    <?php
+<?php
 /*
  * This file is part of Solano-PHPUnit.
  *
@@ -81,6 +81,8 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
                 $testName = $test->getName();
                 $testcase['id'] = $className . '::' . $testName;
                 $testcase['file'] = $class->getFileName();
+                // Set an environment variable to the filename in case of fatal error
+                putenv("SOLANO_LAST_FILE_STARTED=" . $testcase['file']);
                 if ($class->hasMethod($testName)) {
                     $testcase['address'] = $className . '::' . $testName;
                 } else {
@@ -247,16 +249,11 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
             $this->files[$file] = array();
         }
         $this->files[$file][] = $testcase;
+        // Flush test to report
+        SolanoLabs_PHPUnit_JsonReporter::writeTestcaseToFile($this->outputFile, $file, $testcase);
+
     }
 
-    /**
-     * Write output file.
-     * Called by PHPUnit_Framework_TestResult::flushListeners()
-     */
-    public function flush()
-    {
-        SolanoLabs_PHPUnit_Util::writeOutputFile($this->outputFile, $this->stripPath, $this->files, $this->excludeFiles);
-    }
 }
 
 endif;
