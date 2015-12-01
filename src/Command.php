@@ -193,6 +193,14 @@ class SolanoLabs_PHPUnit_Command
         // Write temporary XML file
         $xml = SolanoLabs_PHPUnit_XmlGenerator::GenerateXml($config);
         $tempFile = tempnam($config->tempDir, 'SLPHPU');
+        if ($config->configDebug) {
+          $tempFileXML = $tempFile . ".xml";
+          if (!empty(getenv('TDDIUM_TEST_EXEC_ID'))) {
+            $tempFileXML = dirname($tempFile) . DIRECTORY_SEPARATOR . 'phpunit-' . getenv('TDDIUM_TEST_EXEC_ID') . '.xml';
+          }
+          rename($tempFile, $tempFileXML);
+          $tempFile = $tempFileXML;
+        }
         file_put_contents($tempFile, $xml);
 
         // Run PHPUnit
@@ -227,12 +235,7 @@ class SolanoLabs_PHPUnit_Command
 
         // Save generated configuration XML file?
         if ($config->configDebug) {
-            if (!empty(getenv('TDDIUM_TEST_EXEC_ID')) && !empty(getenv('TDDIUM_SESSION_ID'))) {
-                // Attach configuration XML to build page
-                rename($tempFile, getenv('HOME') . '/results/' . getenv('TDDIUM_SESSION_ID') . '/session/phpunit-' . getenv('TDDIUM_TEST_EXEC_ID') . '.xml');
-            } else {
-                echo("# XML phpunit configuration file: " . $tempFile . "\n");
-            }
+            echo("# XML phpunit configuration file: " . $tempFile . "\n");
         } else {
             unlink($tempFile);
         }
