@@ -193,6 +193,14 @@ class SolanoLabs_PHPUnit_Command
         // Write temporary XML file
         $xml = SolanoLabs_PHPUnit_XmlGenerator::GenerateXml($config);
         $tempFile = tempnam($config->tempDir, 'SLPHPU');
+        if ($config->configDebug) {
+          $tempFileXML = $tempFile . ".xml";
+          if (!empty(getenv('TDDIUM_TEST_EXEC_ID'))) {
+            $tempFileXML = dirname($tempFile) . DIRECTORY_SEPARATOR . 'phpunit-' . getenv('TDDIUM_TEST_EXEC_ID') . '.xml';
+          }
+          rename($tempFile, $tempFileXML);
+          $tempFile = $tempFileXML;
+        }
         file_put_contents($tempFile, $xml);
 
         // Run PHPUnit
@@ -225,9 +233,13 @@ class SolanoLabs_PHPUnit_Command
             SolanoLabs_PHPUnit_JsonReporter::writeJsonToFile($config->outputFile, $jsonData);
         }
 
+        // Save generated configuration XML file?
+        if ($config->configDebug) {
+            echo("# XML phpunit configuration file: " . $tempFile . "\n");
+        } else {
+            unlink($tempFile);
+        }
 
-        // Delete temporary XML file
-        unlink($tempFile);
         return $exitCode;
     }
 
@@ -244,6 +256,7 @@ class SolanoLabs_PHPUnit_Command
         echo("   --tddium-output-file <file>  Can also be set with \$TDDIUM_OUTPUT_FILE environment variable\n");
         echo("   --ignore-exclude             Ignore <exclude/> child nodes of <testsuite/>.\n");
         echo("   --split                      Run tests one test file per process.\n");
+        echo("   --config-debug               XML configuration passed to phpunit will not be deleted.\n");
         echo("   -h|--help                    Prints this usage information.\n");
         echo(" * Any other supplied options will be passed on to phpunit\n");
     }

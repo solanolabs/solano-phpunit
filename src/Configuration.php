@@ -94,6 +94,11 @@ class SolanoLabs_PHPUnit_Configuration
     /**
      * @var boolean
      */
+    public $configDebug = false;
+
+    /**
+     * @var boolean
+     */
     public $minXmlFile = false;
 
     /**
@@ -123,6 +128,7 @@ class SolanoLabs_PHPUnit_Configuration
         $config->setOutputFile();
         $config->checkSplit();
         $config->checkIgnoreExclude();
+        $config->checkConfigDebug();
         $config->checkTestsuiteOption();
 
         if (count($config->parseErrors)) { return $config; }
@@ -165,6 +171,17 @@ class SolanoLabs_PHPUnit_Configuration
     {
         if ($key = array_search('--ignore-exclude', $this->args)) {
             $this->ignoreExclude = true;
+            unset($this->args[$key]);
+        }
+    }
+
+    /**
+     * Check if --config-debug was supplied
+     */
+    private function checkConfigDebug()
+    {
+        if ($key = array_search('--config-debug', $this->args)) {
+            $this->configDebug = true;
             unset($this->args[$key]);
         }
     }
