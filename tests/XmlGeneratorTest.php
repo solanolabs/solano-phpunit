@@ -22,7 +22,7 @@ class Solano_PHPUnit_Wrapper_XmlGenerator_Test extends PHPUnit_Framework_TestCas
         $this->assertEquals(4, $nodes->length);
         foreach($nodes as $node) {
             $this->assertTrue(file_exists($node->nodeValue));
-            $this->assertTrue(in_array($node->nodeValue, $this->config->testFiles));
+            $this->assertTrue(in_array($node->nodeValue, array_keys($this->config->testFiles)));
         }
     }
 

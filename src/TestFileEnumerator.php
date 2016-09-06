@@ -76,19 +76,17 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
             }
             $enumerator->extractTestFiles($testSuiteNode);
         }
-        $enumerator->testFiles = array_unique($enumerator->testFiles);
-        $enumerator->excludeFiles = array_unique($enumerator->excludeFiles);
 
         // If tests were supplied by the command line, use only those...else include all tests.
         if (count($config->cliTestFiles)) {
-            $config->excludeFiles = array_intersect($config->cliTestFiles, $enumerator->excludeFiles);
-            $config->testFiles = array_intersect($config->cliTestFiles, $enumerator->testFiles);
+            $config->excludeFiles = array_intersect_key($config->cliTestFiles, $enumerator->excludeFiles);
+            $config->testFiles = array_intersect_key($config->cliTestFiles, $enumerator->testFiles);
         } else {
             $config->testFiles = $enumerator->testFiles;
             $config->excludeFiles = $enumerator->excludeFiles;
         }
-        sort($config->testFiles);
-        sort($config->excludeFiles);
+        ksort($config->testFiles);
+        ksort($config->excludeFiles);
     }
 
     /**
@@ -99,6 +97,28 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
     private function setWorkingDir($workingDir)
     {
         $this->workingDir = $workingDir;
+    }
+
+    /**
+     * Get the relevant attributes from testsuite child nodes
+     * PHPUnit 5 introduced additional attributes besides 'suffix'
+     *
+     * @param DomNode             $node
+     */
+    private function extractNodeAttributes($node)
+    {
+        $attributes = array();
+        if ($node->hasAttributes()) {
+            foreach ($node->attributes as $attributeNode) {
+                $attributes[$attributeNode->nodeName] = $attributeNode->nodeValue;
+            }
+            /*foreach(array('suffix', 'phpVersion', 'phpVersionOperator') as $attribute) {
+                if($node->hasAttribute($attribute)) {
+                    $attributes[$attribute] = $node->getAttribute($attribute);
+                }
+            }*/
+        }
+        return $attributes;
     }
 
     /**
@@ -114,53 +134,54 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
         foreach($testSuiteNode->childNodes as $node) {
             switch ($node->nodeName) {
                 case 'directory':
-                    $suffix = 'Test.php';
-                    if($node->hasAttribute('suffix')) {
-                        $suffix = $node->getAttribute('suffix');
-                    }
-                    $files = array_merge($files, $this->getDirectoryFiles(SolanoLabs_PHPUnit_Util::truepath($node->nodeValue, $this->workingDir), $suffix));
+                    $attributes = $this->extractNodeAttributes($node);
+                    $files = array_merge($files, $this->getDirectoryFiles(SolanoLabs_PHPUnit_Util::truepath($node->nodeValue, $this->workingDir), $attributes));
                     break;
                 case 'file':
+                    $attributes = $this->extractNodeAttributes($node);
                     $file = SolanoLabs_PHPUnit_Util::truepath($node->nodeValue, $this->workingDir);
                     if (is_file($file)) {
-                        $files[] = $file;
+                        $files[$file] = $attributes;
                     } else {
                         echo("[WARNING] File does not exist: $file\n");
                     }
                     break;
                 case 'exclude':
+                    $attributes = $this->extractNodeAttributes($node);
                     if ($node->hasChildNodes()) {
                         foreach($node->childNodes as $excludeNode) {
                             if ($excludeNode->nodeValue) {
-                                $excludePaths[] = SolanoLabs_PHPUnit_Util::truepath($excludeNode->nodeValue, $this->workingDir);
+                                $excludePaths[SolanoLabs_PHPUnit_Util::truepath($excludeNode->nodeValue, $this->workingDir)] = $attributes;
                             }
                         }
                     } elseif ($node->nodeValue) {
-                        $excludePaths[] = SolanoLabs_PHPUnit_Util::truepath($node->nodeValue, $this->workingDir);
+                        $excludePaths[SolanoLabs_PHPUnit_Util::truepath($node->nodeValue, $this->workingDir)] = $attributes;
                     }
                     break;
             }
         }
+        
         if (!count($files)) { return; }
+
         // Should some files be excluded?
         if (!$this->ignoreExclude && count($excludePaths)) {
-            for ($i = count($files) - 1; $i >= 0; $i--) {
-                foreach ($excludePaths as $excludePath) {
+            foreach ($files as $file => $attributes) {
+                foreach (array_keys($excludePaths) as $excludePath) {
                     if (is_dir($excludePath)) {
-                        if (0 === strpos($files[$i], $excludePath . DIRECTORY_SEPARATOR)) {
-                            $this->excludeFiles[] = $files[$i];
-                            unset($files[$i]);
+                        if (0 === strpos($file, $excludePath . DIRECTORY_SEPARATOR)) {
+                            $this->excludeFiles[$file] = $attributes;
+                            unset($files[$file]);
                             break;
                         }
-                    } elseif ($excludePath == $files[$i]) {
-                        $this->excludeFiles[] = $files[$i];
-                        unset($files[$i]);
+                    } elseif ($excludePath == $file) {
+                        $this->excludeFiles[$file] = $attributes;
+                        unset($files[$file]);
                         break;
                     } elseif (false !== strpos($excludePath, '*')) {
                         // check wildcard match
-                        if (fnmatch($excludePath, $files[$i])) {
-                            $this->excludeFiles[] = $files[$i];
-                            unset($files[$i]);
+                        if (fnmatch($excludePath, $file)) {
+                            $this->excludeFiles[$file] = $attributes;
+                            unset($files[$file]);
                             break;
                         }
                     }
@@ -168,21 +189,43 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
             }
         }
 
-        $this->testFiles = array_values(array_unique(array_merge($this->testFiles, $files)));
+        $this->testFiles = array_merge($this->testFiles, $files);
     }
 
     /**
      * Get the files in a specific <testsuite/>.
      *
      * @param string             $path
+     * @param string             $attributes
+     */
+    private function getDirectoryFiles($path, $attributes)
+    {
+        $files = array();
+        $suffix = 'Test.php'; // Default PHPUnit test file suffix
+        if (!empty($attributes['suffix'])) { $suffix = $attributes['suffix']; }
+        $foundFiles = $this->getDirectoryFilesRaw($path, $suffix);
+        unset($attributes['suffix']);
+        foreach ($foundFiles as $file) {
+            $shortFilepath = SolanoLabs_PHPUnit_Util::truepath($file);
+            $files[$shortFilepath] = $attributes;
+        }
+        return $files;
+    }
+
+    /**
+     * Get all files matching a suffix
+     *
+     * @param string             $path
      * @param string             $suffix
      */
-    private function getDirectoryFiles($path, $suffix)
+    private function getDirectoryFilesRaw($path, $suffix)
     {
         $files = glob($path . DIRECTORY_SEPARATOR . "*" . $suffix);
         foreach (glob($path . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR|GLOB_NOSORT) as $dir) {
-             $files = array_merge($files, $this->getDirectoryFiles($path . DIRECTORY_SEPARATOR . basename($dir), $suffix));
+            $files = array_merge($files, $this->getDirectoryFilesRaw($path . DIRECTORY_SEPARATOR . basename($dir), $suffix));
         }
-        return array_map(array('SolanoLabs_PHPUnit_Util', 'truepath'), $files);
+        return $files;
     }
+
+
 }

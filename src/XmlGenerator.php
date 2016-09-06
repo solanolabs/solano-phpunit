@@ -44,10 +44,17 @@ class SolanoLabs_PHPUnit_XmlGenerator
 
         // Add testsuites node
         $testSuitesNode = $domDoc->createElement('testsuites');
-        foreach($config->testFiles as $file) {
+        foreach($config->testFiles as $file => $attributes) {
             $testSuiteNode = $domDoc->createElement('testsuite');
             $testSuiteNode->setAttribute('name', $file);
             $testNode = $domDoc->createElement('file', $file);
+            if (is_array($attributes)) {
+                foreach ($attributes as $key => $value) {
+                    if ($key != 'suffix') {
+                        $testNode->setAttribute($key, $value);
+                    }
+                }
+            }
             $testSuiteNode->appendChild($testNode);
             $testSuitesNode->appendChild($testSuiteNode);
         }
