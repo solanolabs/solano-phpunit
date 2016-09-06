@@ -195,8 +195,10 @@ class SolanoLabs_PHPUnit_Command
         $tempFile = tempnam($config->tempDir, 'SLPHPU');
         if ($config->configDebug) {
           $tempFileXML = $tempFile . ".xml";
-          if (!empty(getenv('TDDIUM_TEST_EXEC_ID'))) {
-            $tempFileXML = dirname($tempFile) . DIRECTORY_SEPARATOR . 'phpunit-' . getenv('TDDIUM_TEST_EXEC_ID') . '.xml';
+          # PHP versions prior to 5.5 can only use variables as parameters for empty()
+          # http://php.net/manual/en/function.empty.php#refsect1-function.empty-parameters
+          if ($test_exec_id = getenv('TDDIUM_TEST_EXEC_ID') && !empty($test_exec_id)) {
+            $tempFileXML = dirname($tempFile) . DIRECTORY_SEPARATOR . 'phpunit-' . trim($test_exex_id) . '.xml';
           }
           rename($tempFile, $tempFileXML);
           $tempFile = $tempFileXML;
