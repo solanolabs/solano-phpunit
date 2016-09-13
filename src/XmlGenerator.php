@@ -71,7 +71,7 @@ class SolanoLabs_PHPUnit_XmlGenerator
             $argumentsNode->appendChild($argumentNode);
 
             if (count($config->excludeFiles)) {
-                $argumentNode = $domDoc->createElement('string', implode(',', $config->excludeFiles));
+                $argumentNode = $domDoc->createElement('string', implode(',', array_keys($config->excludeFiles)));
                 $argumentsNode->appendChild($argumentNode);
             }
 

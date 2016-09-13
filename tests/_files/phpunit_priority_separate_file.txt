@@ -1,0 +1,5 @@
+# Specify priority order of tests (lower numbers have priority over higher numbers)
+# <priority>:<test-file>
+# Lines that begin with '#' or empty lines will be ignored
+2:mock_tests/t1Test.php
+1:mock_tests/t2Test.php
