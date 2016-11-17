@@ -72,6 +72,12 @@ class SolanoLabs_PHPUnit_Configuration
     public $priorityFile = '';
 
     /**
+     * @var int
+     * 0 = not specified; 1 = alphabetical order; -1 = reverse alphabetical order
+     */
+    public $alphaOrder = 0;
+
+    /**
      * @var array
      */
     public $testPriorities = array();
@@ -112,7 +118,7 @@ class SolanoLabs_PHPUnit_Configuration
     public $minXmlFile = false;
 
     /**
-     * @var sting
+     * @var string
      */
     public $testsuiteFilter = '';
 
@@ -141,6 +147,7 @@ class SolanoLabs_PHPUnit_Configuration
         $config->checkConfigDebug();
         $config->checkTestsuiteOption();
         $config->checkPriorityFile();
+        $config->checkAlphaOrder();
 
         if (count($config->parseErrors)) { return $config; }
 
@@ -193,6 +200,21 @@ class SolanoLabs_PHPUnit_Configuration
     {
         if ($key = array_search('--config-debug', $this->args)) {
             $this->configDebug = true;
+            unset($this->args[$key]);
+        }
+    }
+
+    /**
+     * Check if --alpha or --rev-alpha flags were supplied
+     */
+    private function checkAlphaOrder()
+    {
+        if ($key = array_search('--alpha', $this->args)) {
+            $this->alphaOrder = 1;
+            unset($this->args[$key]);
+        }
+        if ($key = array_search('--rev-alpha', $this->args)) {
+            $this->alphaOrder = -1;
             unset($this->args[$key]);
         }
     }
