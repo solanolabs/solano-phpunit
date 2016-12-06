@@ -25,6 +25,15 @@ class Solano_PHPUnit_Wrapper_XmlGenerator_Test extends PHPUnit_Framework_TestCas
             $this->assertTrue(in_array($node->nodeValue, $this->config->testFiles));
         }
     }
+    
+    public function testXmlGeneratorFilter()
+    {
+        $nodes = $this->xpath->query('//filter/whitelist/directory | //filter/whitelist/file | //filter/whitelist/exclude/directory | //filter/whitelist/exclude/file');
+        $this->assertEquals(4, $nodes->length);
+        foreach($nodes as $node) {
+            $this->assertEquals(preg_match("#^" . dirname($this->domDoc->documentURI) . DIRECTORY_SEPARATOR . "(.+)$#", $node->nodeValue), 1);
+        }
+    }
 
     public function testXmlGeneratorLogging()
     {
