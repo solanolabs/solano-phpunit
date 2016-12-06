@@ -28,6 +28,32 @@ class SolanoLabs_PHPUnit_XmlGenerator
         $domDoc->preserveWhiteSpace = false;
         $domDoc->loadXML($config->domDoc->saveXML());
 
+        // Add prefixes to filter paths
+        $filterNodes = $domDoc->getElementsByTagName('filter');
+        if (count($filterNodes)) {
+            foreach($filterNodes as $filterNode) {
+                $whitelistNodes = $filterNode->getElementsByTagName('whitelist');
+                if (count($whitelistNodes)) {
+                    foreach($whitelistNodes as $whitelistNode) {
+                        // whitelist include and eclude directories
+                        $directoryNodes = $whitelistNode->getElementsByTagName('directory');
+                        if (count($directoryNodes)) {
+                            foreach($directoryNodes as $directoryNode) {
+                                $directoryNode->nodeValue = dirname($config->domDoc->documentURI) . DIRECTORY_SEPARATOR . $directoryNode->nodeValue;
+                            }
+                        }
+                        // whitelist include and exclude files
+                        $fileNodes = $whitelistNode->getElementsByTagName('file');
+                        if (count($fileNodes)) {
+                            foreach($fileNodes as $fileNode) {
+                                $fileNode->nodeValue = dirname($config->domDoc->documentURI) . DIRECTORY_SEPARATOR . $fileNode->textContent;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
         // Remove <testsuites/> and standalone <testsuite/> nodes
         $nodes = $domDoc->getElementsByTagName('testsuites');
         if (count($nodes)) {
