@@ -203,15 +203,14 @@ class SolanoLabs_PHPUnit_Configuration
                     if (!file_exists($file)) {
                         $this->parseErrors[] = "### Error: File does not exist: " . $file;
                     } else {
-                        $this->cliTestFiles[] = $file;
+                        $this->cliTestFiles[$file] = array();
                     }
                 }
                 unset($this->args[1 + $key]);
                 unset($this->args[$key]);
             }
         }
-        $this->cliTestFiles = array_unique($this->cliTestFiles);
-        sort($this->cliTestFiles);
+        ksort($this->cliTestFiles);
         $this->testFiles = $this->cliTestFiles;
     }
 

@@ -7,31 +7,22 @@ tests:
   - type: phpunit
     mode: parallel
     output: exit-status
-    command: ./solano-phpunit --exclude-group E2E    # Default location when added by composer: vendor/bin/solano-phpunit
-    config: phpunit.xml                              # If not supplied, defaults are checked in order: phpunit.xml, phpunit.xml.dist
+    command: ./solano-phpunit  # Default location when added by composer: vendor/bin/solano-phpunit
+    config: phpunit.xml        # If not supplied, defaults are checked in order: phpunit.xml, phpunit.xml.dist
     files:
       - tests/**Test.php
-  # Test E2E group
-  - type: phpunit
-    mode: parallel
-    output: exit-status
-    command: ./solano-phpunit --group E2E
-    config: phpunit.xml
-    files:
-      - tests/E2ETest.php
-  # Test to ensure completely skipped test results are captured
-  - type: phpunit
-    mode: parallel
-    output: exit-status
-    command: ./solano-phpunit --exclude-group E2E
-    config: phpunit.xml
-    files:
-      - tests/E2ETest.php
+  # Test excluding all test files
+  - ./solano-phpunit --group not_set
+
 php:
-  php_version: 5.5
+  php_version:
+    SPLIT:
+      - '5.3'
+      - '5.5'
+      - '7.0'
 
 hooks:
-  pre_setup: composer.phar install
+  pre_setup: composer install
 
 cache:
   key_paths:
