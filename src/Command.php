@@ -258,6 +258,7 @@ class SolanoLabs_PHPUnit_Command
         echo("   --ignore-exclude             Ignore <exclude/> child nodes of <testsuite/>.\n");
         echo("   --split                      Run tests one test file per process.\n");
         echo("   --config-debug               XML configuration passed to phpunit will not be deleted.\n");
+        echo("   --[rev-]alpha                Run test files in alphabetical (or reverse) order.\n");
         echo("   --priority-file              Set priority of tests from separate file.\n");
         echo("                                See https://github.com/solano/solano-phpunit/tree/master/tests/_files/phpunit_priority_separate_file.txt\n");
         echo("   -h|--help                    Prints this usage information.\n");

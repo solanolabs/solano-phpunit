@@ -95,8 +95,16 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
             }
         }
 
-        SolanoLabs_PHPUnit_Util::sortTestFiles($config->testFiles);
-        SolanoLabs_PHPUnit_Util::sortTestFiles($config->excludeFiles);
+        // Sort test files (supplied priority takes precedene over --[rev-]alpha flags)
+        if ($config->alphaOrder == 1) {
+            ksort($config->testFiles);
+            ksort($config->excludeFiles);
+        } elseif ($config->alphaOrder == -1) {
+            krsort($config->testFiles);
+            krsort($config->excludeFiles);
+        }
+        self::sortTestFilesByPriority($config->testFiles);
+        self::sortTestFilesByPriority($config->excludeFiles);
     }
 
     /**
@@ -232,5 +240,25 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
         return $files;
     }
 
+    /**
+     * Sort test files by priority
+     * XML 'priority' attribute or priority defined in '--priority-file' file take precedence
+     */
+    public static function sortTestFilesByPriority($testFiles)
+    {
+        uasort($testFiles, array(__CLASS__, 'compareTestPriorty'));
+        return $testFiles;
+    }
+
+    /**
+     * Compare priority of test file array items
+     */
+    private static function compareTestPriorty($a, $b)
+    {
+        if (empty($a['priority']) || !is_numeric($a['priority'])) { $a['priority'] = 0; }
+        if (empty($b['priority']) || !is_numeric($b['priority'])) { $b['priority'] = 0; }
+        if ($a['priority'] == $b['priority']) { return 0; }
+        return ($a['priority'] < $b['priority']) ? -1 : 1;
+    }
 
 }
