@@ -25,8 +25,5 @@ hooks:
   pre_setup: composer install
 
 cache:
-  key_paths:
-    - composer.json
-    - composer.lock
-  save_paths:
-    - vendor
+  # Ensure each build pulls fresh dependencies to check for requirements breaking
+  nocache: true
