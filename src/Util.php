@@ -146,4 +146,26 @@ class SolanoLabs_PHPUnit_Util
         }
         return $file;
     }
+
+    /**
+     * Sort test files
+     * Default is alphabetical, but XML 'priority' attribute or priority defined in '--priority-file' file take precedence
+     */
+    public static function sortTestFiles($testFiles)
+    {
+        ksort($testFiles);
+        uasort($testFiles, array(__CLASS__, 'compareTestPriorty'));
+        return $testFiles;
+    }
+
+    /**
+     * Compare priority of test file array items
+     */
+    public static function compareTestPriorty($a, $b)
+    {
+        if (empty($a['priority']) || !is_numeric($a['priority'])) { $a['priority'] = 0; }
+        if (empty($b['priority']) || !is_numeric($b['priority'])) { $b['priority'] = 0; }
+        if ($a['priority'] == $b['priority']) { return 0; }
+        return ($a['priority'] < $b['priority']) ? -1 : 1;
+    }
 }

@@ -85,8 +85,18 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
             $config->testFiles = $enumerator->testFiles;
             $config->excludeFiles = $enumerator->excludeFiles;
         }
-        ksort($config->testFiles);
-        ksort($config->excludeFiles);
+
+        // If a priority file is present apply the priorities therein
+        if (count($config->testPriorities)) {
+            foreach($config->testPriorities as $file => $priority) {
+                if (isset($config->testFiles[$file])) {
+                    $config->testFiles[$file]['priority'] = $priority;
+                }
+            }
+        }
+
+        SolanoLabs_PHPUnit_Util::sortTestFiles($config->testFiles);
+        SolanoLabs_PHPUnit_Util::sortTestFiles($config->excludeFiles);
     }
 
     /**
@@ -112,11 +122,6 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
             foreach ($node->attributes as $attributeNode) {
                 $attributes[$attributeNode->nodeName] = $attributeNode->nodeValue;
             }
-            /*foreach(array('suffix', 'phpVersion', 'phpVersionOperator') as $attribute) {
-                if($node->hasAttribute($attribute)) {
-                    $attributes[$attribute] = $node->getAttribute($attribute);
-                }
-            }*/
         }
         return $attributes;
     }
@@ -160,7 +165,7 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
                     break;
             }
         }
-
+        
         if (!count($files)) { return; }
 
         // Should some files be excluded?
@@ -193,7 +198,7 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
     }
 
     /**
-     * Get the files in a specific <testsuite/>.
+     * Find the files in a directory and apply XML attributes to each
      *
      * @param string             $path
      * @param string             $attributes
@@ -203,26 +208,26 @@ class SolanoLabs_PHPUnit_TestFileEnumerator
         $files = array();
         $suffix = 'Test.php'; // Default PHPUnit test file suffix
         if (!empty($attributes['suffix'])) { $suffix = $attributes['suffix']; }
-        $foundFiles = $this->getDirectoryFilesRaw($path, $suffix);
+        $foundFiles = $this->getDirectoryFilesRecursive($path, $suffix);
         unset($attributes['suffix']);
         foreach ($foundFiles as $file) {
-            $shortFilepath = SolanoLabs_PHPUnit_Util::truepath($file);
-            $files[$shortFilepath] = $attributes;
+            $file = SolanoLabs_PHPUnit_Util::truepath($file);
+            $files[$file] = $attributes;
         }
         return $files;
     }
 
     /**
-     * Get all files matching a suffix
+     * Recursively find all files in a directory matching a suffix
      *
      * @param string             $path
      * @param string             $suffix
      */
-    private function getDirectoryFilesRaw($path, $suffix)
+    private function getDirectoryFilesRecursive($path, $suffix)
     {
         $files = glob($path . DIRECTORY_SEPARATOR . "*" . $suffix);
         foreach (glob($path . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR|GLOB_NOSORT) as $dir) {
-            $files = array_merge($files, $this->getDirectoryFilesRaw($path . DIRECTORY_SEPARATOR . basename($dir), $suffix));
+            $files = array_merge($files, $this->getDirectoryFilesRecursive($path . DIRECTORY_SEPARATOR . basename($dir), $suffix));
         }
         return $files;
     }
