@@ -69,18 +69,17 @@ class SolanoLabs_PHPUnit_Command
         }
 
         // Pre-populate json report when appropriate
-        $already_run_files = array();
         if (getenv('TDDIUM') && !empty($config->outputFile)) {
             $jsonData = SolanoLabs_PHPUnit_JsonReporter::readOutputFile($config->outputFile);
 
             // test files
             foreach (array_keys($config->testFiles) as $file) {
-                $file = SolanoLabs_PHPUnit_Util::shortenFilename($file);
-                if (isset($jsonData['byfile'][$file])) {
-                    if (count($jsonData['byfile'][$file])) {
+                $shortFilename = SolanoLabs_PHPUnit_Util::shortenFilename($file);
+                if (isset($jsonData['byfile'][$shortFilename])) {
+                    if (count($jsonData['byfile'][$shortFilename])) {
                         // Output for this test file has already been written
                         unset($config->testFiles[$file]);
-                        $already_run_files[] = $file;
+                        echo("NOTICE: File already run: $shortFilename\n");
                     }
                 } else {
                     // There is no listing for this test file, so create one
