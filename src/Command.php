@@ -83,7 +83,7 @@ class SolanoLabs_PHPUnit_Command
                     }
                 } else {
                     // There is no listing for this test file, so create one
-                    $jsonData['byfile'][$file] = array();
+                    $jsonData['byfile'][$shortFilename] = array();
                 }
             }
 
