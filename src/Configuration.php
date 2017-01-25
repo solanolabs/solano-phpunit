@@ -65,6 +65,22 @@ class SolanoLabs_PHPUnit_Configuration
      * @var string
      */
     public $outputFile = '';
+
+    /**
+     * @var string
+     */
+    public $priorityFile = '';
+
+    /**
+     * @var int
+     * 0 = not specified; 1 = alphabetical order; -1 = reverse alphabetical order
+     */
+    public $alphaOrder = 0;
+
+    /**
+     * @var array
+     */
+    public $testPriorities = array();
     
     /**
      * @var string
@@ -102,7 +118,7 @@ class SolanoLabs_PHPUnit_Configuration
     public $minXmlFile = false;
 
     /**
-     * @var sting
+     * @var string
      */
     public $testsuiteFilter = '';
 
@@ -130,6 +146,8 @@ class SolanoLabs_PHPUnit_Configuration
         $config->checkIgnoreExclude();
         $config->checkConfigDebug();
         $config->checkTestsuiteOption();
+        $config->checkPriorityFile();
+        $config->checkAlphaOrder();
 
         if (count($config->parseErrors)) { return $config; }
 
@@ -187,6 +205,21 @@ class SolanoLabs_PHPUnit_Configuration
     }
 
     /**
+     * Check if --alpha or --rev-alpha flags were supplied
+     */
+    private function checkAlphaOrder()
+    {
+        if ($key = array_search('--alpha', $this->args)) {
+            $this->alphaOrder = 1;
+            unset($this->args[$key]);
+        }
+        if ($key = array_search('--rev-alpha', $this->args)) {
+            $this->alphaOrder = -1;
+            unset($this->args[$key]);
+        }
+    }
+
+    /**
      * Adds cli specified files to the configuration
      */
     private function findCliTestFiles()
@@ -203,16 +236,67 @@ class SolanoLabs_PHPUnit_Configuration
                     if (!file_exists($file)) {
                         $this->parseErrors[] = "### Error: File does not exist: " . $file;
                     } else {
-                        $this->cliTestFiles[] = $file;
+                        $this->cliTestFiles[$file] = array();
                     }
                 }
                 unset($this->args[1 + $key]);
                 unset($this->args[$key]);
             }
         }
-        $this->cliTestFiles = array_unique($this->cliTestFiles);
-        sort($this->cliTestFiles);
         $this->testFiles = $this->cliTestFiles;
+    }
+
+    /**
+     * Specify a manifest file determining priority tests should be listed in replacement phpunit.xml file
+     */
+    private function checkPriorityFile()
+    {
+        if ($key = array_search('--priority-file', $this->args)) {
+            if (!isset($this->args[1 + $key])) {
+                $this->parseErrors[] = "### Error: No priority file specified";
+            }
+            if (!file_exists($this->args[1 + $key])) {
+                $this->parseErrors[] = "### Error: Specified priority file does not exist";
+            } elseif (!is_file($this->args[1 + $key])) {
+                $this->parseErrors[] = "### Error: Specified priority file is a directory";
+            } else {
+                $this->priorityFile = SolanoLabs_PHPUnit_Util::truepath($this->args[1 + $key]);
+                unset($this->args[1 + $key]);
+                unset($this->args[$key]);
+                $this->parsePriorityFile();
+            }
+        }
+    }
+
+    /**
+     * Read priority file into priorities array
+     */
+    private function parsePriorityFile()
+    {
+        if (!($priorityFileContents = file($this->priorityFile, FILE_IGNORE_NEW_LINES))) {
+            $this->parseErrors[] = "### Error: Specified priority file could not be read";
+            return;
+        }
+        foreach ($priorityFileContents as $lineNum => $line) {
+            $line = trim($line);
+            // Only care about uncommented lines
+            if (substr($line, 0, 1) != '#') {
+                $linePieces = explode(':', $line);
+                if (count($linePieces) < 2) {
+                    $this->parseErrors[] = "### Error: Priority file malformed, missing ':' delimiter on " . $this->priorityFile . ':' . $lineNum;
+                    continue;
+                }
+                if (!is_numeric($linePieces[0])) {
+                    $this->parseErrors[] = "### Error: Priority file malformed, priority is not numeric on " . $this->priorityFile . ':' . $lineNum;
+                    continue;
+                }
+                $priority = $linePieces[0];
+                // Separate comments from file path
+                $filePieces = explode('#', $linePieces[1]);
+                $file = SolanoLabs_PHPUnit_Util::truepath(trim($filePieces[0]), $this->workingDir);
+                $this->testPriorities[$file] = $priority;
+            }
+        }
     }
 
     /**

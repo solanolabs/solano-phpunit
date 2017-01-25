@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="http://schema.phpunit.de/3.7/phpunit.xsd"
+	 verbose="true">
+  <testsuites>
+    <testsuite name="Solano PHPUnit Testsuite">
+      <!-- list tests in reverse alphabetical order, but they will be run in alphabetical order -->
+      <file>mock_tests/t2Test.php</file>
+      <file>mock_tests/t1Test.php</file>
+    </testsuite>
+  </testsuites>
+</phpunit>

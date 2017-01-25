@@ -69,47 +69,46 @@ class SolanoLabs_PHPUnit_Command
         }
 
         // Pre-populate json report when appropriate
-        $already_run_files = array();
         if (getenv('TDDIUM') && !empty($config->outputFile)) {
             $jsonData = SolanoLabs_PHPUnit_JsonReporter::readOutputFile($config->outputFile);
 
             // test files
-            for ($i = count($config->testFiles) - 1; $i >= 0; $i--) {
-                $file = SolanoLabs_PHPUnit_Util::shortenFilename($config->testFiles[$i]);//, $config->workingDir);
-                if (isset($jsonData['byfile'][$file])) {
-                    if (count($jsonData['byfile'][$file])) {
+            foreach (array_keys($config->testFiles) as $file) {
+                $shortFilename = SolanoLabs_PHPUnit_Util::shortenFilename($file);
+                if (isset($jsonData['byfile'][$shortFilename])) {
+                    if (count($jsonData['byfile'][$shortFilename])) {
                         // Output for this test file has already been written
-                        unset($config->testFiles[$i]);
-                        $already_run_files[] = $file;
+                        unset($config->testFiles[$file]);
+                        echo("NOTICE: File already run: $shortFilename\n");
                     }
                 } else {
                     // There is no listing for this test file, so create one
-                    $jsonData['byfile'][$file] = array();
+                    $jsonData['byfile'][$shortFilename] = array();
                 }
             }
 
             // Excluded files
-            for ($i = count($config->excludeFiles) - 1; $i >= 0; $i--) {
-                $shortFilename = SolanoLabs_PHPUnit_Util::shortenFilename($config->excludeFiles[$i]);
-                if (isset($jsonData['byfile'][$shortFilename]) && count($jsonData['byfile'][$shortFilename])) {
+            foreach (array_keys($config->excludeFiles) as $file) {
+                $file = SolanoLabs_PHPUnit_Util::shortenFilename($file);
+                if (isset($jsonData['byfile'][$file]) && count($jsonData['byfile'][$file])) {
                     // Output for this excluded file has already been written
-                    unset($config->excludeFiles[$i]);
+                    unset($config->excludeFiles[$file]);
                 } else {
                     // There is no listing for this excluded file, so create one
-                    $jsonData['byfile'][$shortFilename] = SolanoLabs_PHPUnit_JsonReporter::generateExcludeFileNotice($shortFilename);
+                    $jsonData['byfile'][$file] = SolanoLabs_PHPUnit_JsonReporter::generateExcludeFileNotice($file);
                 }
             }
 
             // Cli specified files that are not in test or excluded files
-            foreach ($config->cliTestFiles as $file) {
-                if (!in_array($file, $config->testFiles) && !in_array($file, $config->excludeFiles)) {
-                    $shortFilename = SolanoLabs_PHPUnit_Util::shortenFilename($file);
+            foreach (array_keys($config->cliTestFiles) as $file) {
+                $shortFilename = SolanoLabs_PHPUnit_Util::shortenFilename($file);
+                if (!array_key_exists($file, $config->testFiles) && !array_key_exists($file, $config->excludeFiles)) {
                     if (empty($jsonData['byfile'][$shortFilename])) {
                         $jsonData['byfile'][$shortFilename] = array(array(
                         'id' => $shortFilename,
                             'address' => $shortFilename,
                             'status' => 'skip',
-                            'stderr' => 'Skipped Test File: ' . $shortFilename . "\n" . 'Due to --group, --exclude-group, or --testsuite flags',
+                            'stderr' => 'Skipped Test File: ' . $shortFilename . "\nPHPUnit did not record running CLI specified test file\nCheck --[exclude-]group or --testsuite flags, php version, etc.",
                             'stdout' => '',
                             'time' => 0,
                             'traceback' => array()));
@@ -123,7 +122,7 @@ class SolanoLabs_PHPUnit_Command
         if (count($config->testFiles)) {
             //  note first test file in case it causes a fatal PHP error
             $filesList = array_keys($config->testFiles);
-            putenv("SOLANO_LAST_FILE_STARTED=" . SolanoLabs_PHPUnit_Util::shortenFilename($config->testFiles[$filesList[0]], $config->workingDir));
+            putenv("SOLANO_LAST_FILE_STARTED=" . SolanoLabs_PHPUnit_Util::shortenFilename($filesList[0], $config->workingDir));
         } else {
             if ($exit) {
                 echo("No test files found or all test files have already been reported.\n");
@@ -139,22 +138,22 @@ class SolanoLabs_PHPUnit_Command
         // Should all of the tests be run at once or split?
         if ($config->splitTests) {
             $exitCode = 0;
-	        foreach ($config->testFiles as $testFile) {
-                $shortFilename = substr($testFile, strlen($config->workingDir) + 1);
+	        foreach ($config->testFiles as $file => $attributes) {
+                $shortFilename = substr($file, strlen($config->workingDir) + 1);
                 echo("\nRunning tests in: $shortFilename\n");
                 $splitConfig = $config;
-                $splitConfig->testFiles = array($testFile);
+                $splitConfig->testFiles = array($file => $attributes);
                 $splitExitCode = self::runTests($splitConfig);
                 if ($splitExitCode != 0) {
                     $exitCode = $splitExitCode;
                 }
             }
-            foreach ($config->excludeFiles as $excludeFile) {
+            foreach (array_keys($config->excludeFiles) as $excludeFile) {
                 $shortFilename = substr($excludeFile, strlen($config->workingDir) + 1);
                 $skipMessages[] = "File in XML <exclude/>: $shortFilename";
             }
         } else {
-            foreach ($config->excludeFiles as $excludeFile) {
+            foreach (array_keys($config->excludeFiles) as $excludeFile) {
                 $shortFilename = substr($excludeFile, strlen($config->workingDir) + 1);
                 $skipMessages[] = "File in XML <exclude/>: $shortFilename";
             }
@@ -215,9 +214,8 @@ class SolanoLabs_PHPUnit_Command
         // Add skip notices if group/testsuite filters are in use
         if (getenv('TDDIUM') && !empty($config->outputFile)) {
             $jsonData = SolanoLabs_PHPUnit_JsonReporter::readOutputFile($config->outputFile);
-            $allTestFiles = array_unique(array_merge($config->testFiles, $config->cliTestFiles));
-            sort($allTestFiles);
-            foreach($allTestFiles as $testFile) {
+            $allTestFiles = array_merge($config->testFiles, $config->cliTestFiles);
+            foreach(array_keys($allTestFiles) as $testFile) {
                 $shortFilename = substr($testFile, 1 + strlen(getcwd()));
                 if (empty($jsonData['byfile'][$shortFilename])) {
                     // All tests in file were skipped
@@ -225,7 +223,7 @@ class SolanoLabs_PHPUnit_Command
                         'id' => $shortFilename,
                         'address' => $shortFilename,
                         'status' => 'skip',
-                        'stderr' => 'Skipped Test File: ' . $shortFilename . "\n" . 'Due to --group, --exclude-group, or --testsuite flags',
+                        'stderr' => 'Skipped Test File: ' . $shortFilename . "\nPHPUnit did not record running\nCheck --[exclude-]group or --testsuite flags, php version, etc.",
                         'stdout' => '',
                         'time' => 0,
                         'traceback' => array()));
@@ -259,6 +257,9 @@ class SolanoLabs_PHPUnit_Command
         echo("   --ignore-exclude             Ignore <exclude/> child nodes of <testsuite/>.\n");
         echo("   --split                      Run tests one test file per process.\n");
         echo("   --config-debug               XML configuration passed to phpunit will not be deleted.\n");
+        echo("   --[rev-]alpha                Run test files in alphabetical (or reverse) order.\n");
+        echo("   --priority-file              Set priority of tests from separate file.\n");
+        echo("                                See https://github.com/solano/solano-phpunit/tree/master/tests/_files/phpunit_priority_separate_file.txt\n");
         echo("   -h|--help                    Prints this usage information.\n");
         echo(" * Any other supplied options will be passed on to phpunit\n");
     }
