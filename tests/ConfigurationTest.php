@@ -42,7 +42,12 @@ class Solano_PHPUnit_Wrapper_Configuration_Test extends PHPUnit_Framework_TestCa
             $config = SolanoLabs_PHPUnit_Configuration::parseArgs($args);
         }
         catch (Exception $e) {
-            $this->assertEquals(get_class($e), 'PHPUnit_Framework_Error_Warning');
+            // PHPUnit versions 6+ use namespaced class names: https://github.com/sebastianbergmann/phpunit/wiki/Release-Announcement-for-PHPUnit-6.0.0#backwards-compatibility-issues
+            $class = get_class($e);
+            if ($class == 'PHPUnit_Framework_Error_Warning') {
+                $class = 'PHPUnit\Framework\Error\Warning';
+            }
+            $this->assertEquals($class, 'PHPUnit\Framework\Error\Warning');
         }
     }
 
