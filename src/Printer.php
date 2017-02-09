@@ -16,6 +16,20 @@ use SebastianBergmann\Environment\Console;
  * @copyright  Solano Labs https://www.solanolabs.com/
  * @link       https://www.solanolabs.com/
  */
+
+/*
+ * PHPUnit versions 6+ changed to using namespaced classes (i.e. 'PHPUnit_TextUI_ResultPrinter' to 'PHPUnit\TextUI\ResultPrinter')
+ * https://github.com/sebastianbergmann/phpunit/wiki/Release-Announcement-for-PHPUnit-6.0.0#backwards-compatibility-issues
+ * Use 'class_alias' to allow both PHPUnit versions 6+ and earlier versions to be used
+ * From https://github.com/symfony/symfony/issues/21534#issuecomment-278278352
+ */
+
+if (!class_exists('\PHPUnit_TextUI_ResultPrinter', true)) {
+    class_alias('\PHPUnit\TextUI\ResultPrinter', '\PHPUnit_TextUI_ResultPrinter');
+} elseif (!class_exists('\PHPUnit\TextUI\ResultPrinter', true)) {
+    class_alias('\PHPUnit_TextUI_ResultPrinter', '\PHPUnit\TextUI\ResultPrinter');
+}
+
 class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
 {
     /**
