@@ -123,12 +123,12 @@ class SolanoLabs_PHPUnit_Util
         if (is_array($data)) {
             array_walk_recursive($data, function (&$input) {
             if (is_string($input)) {
-                    $input = PHPUnit_Util_String::convertToUtf8($input);
+                    $input = self::convertToUtf8($input);
                 }
             });
             unset($input);
         } else {
-            $data = PHPUnit_Util_String::convertToUtf8($data);
+            $data = self::convertToUtf8($data);
         }
         return $data;
     }
@@ -145,5 +145,59 @@ class SolanoLabs_PHPUnit_Util
             $file = substr($file, strlen($stripPath) + 1);
         }
         return $file;
+    }
+
+    /**
+     * Converts a string to UTF-8 encoding.
+     * From https://github.com/sebastianbergmann/phpunit/blob/5.4/src/Util/String.php#L38
+     * (\PHPUnit\Util\String removed from newer versions PHPUnit)
+     *
+     * @param string $string
+     *
+     * @return string
+     */
+    public static function convertToUtf8($string)
+    {
+        if (!self::isUtf8($string)) {
+            if (function_exists('mb_convert_encoding')) {
+                $string = mb_convert_encoding($string, 'UTF-8');
+            } else {
+                $string = utf8_encode($string);
+            }
+        }
+        return $string;
+    }
+
+    /**
+     * Checks a string for UTF-8 encoding.
+     * From https://github.com/sebastianbergmann/phpunit/blob/5.4/src/Util/String.php#L38
+     * (\PHPUnit\Util\String removed from newer versions PHPUnit)
+     *
+     * @param string $string
+     *
+     * @return bool
+     */
+    protected static function isUtf8($string)
+    {
+        $length = strlen($string);
+        for ($i = 0; $i < $length; $i++) {
+            if (ord($string[$i]) < 0x80) {
+                $n = 0;
+            } elseif ((ord($string[$i]) & 0xE0) == 0xC0) {
+                $n = 1;
+            } elseif ((ord($string[$i]) & 0xF0) == 0xE0) {
+                $n = 2;
+            } elseif ((ord($string[$i]) & 0xF0) == 0xF0) {
+                $n = 3;
+            } else {
+                return false;
+            }
+            for ($j = 0; $j < $n; $j++) {
+                if ((++$i == $length) || ((ord($string[$i]) & 0xC0) != 0x80)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

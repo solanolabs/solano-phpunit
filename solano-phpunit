@@ -36,4 +36,6 @@ if (function_exists('register_shutdown_function')) {
     include(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . "ErrorHandling.php");
 }
 
+SolanoLabs_PHPUnit_Version_Prepare::prepare();
+
 SolanoLabs_PHPUnit_Command::main();

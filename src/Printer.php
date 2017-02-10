@@ -17,19 +17,6 @@ use SebastianBergmann\Environment\Console;
  * @link       https://www.solanolabs.com/
  */
 
-/*
- * PHPUnit versions 6+ changed to using namespaced classes (i.e. 'PHPUnit_TextUI_ResultPrinter' to 'PHPUnit\TextUI\ResultPrinter')
- * https://github.com/sebastianbergmann/phpunit/wiki/Release-Announcement-for-PHPUnit-6.0.0#backwards-compatibility-issues
- * Use 'class_alias' to allow both PHPUnit versions 6+ and earlier versions to be used
- * From https://github.com/symfony/symfony/issues/21534#issuecomment-278278352
- */
-
-if (!class_exists('\PHPUnit_TextUI_ResultPrinter', true)) {
-    class_alias('\PHPUnit\TextUI\ResultPrinter', '\PHPUnit_TextUI_ResultPrinter');
-} elseif (!class_exists('\PHPUnit\TextUI\ResultPrinter', true)) {
-    class_alias('\PHPUnit_TextUI_ResultPrinter', '\PHPUnit\TextUI\ResultPrinter');
-}
-
 class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
 {
     /**
@@ -84,6 +71,22 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     public function addFailure(PHPUnit_Framework_Test $test, PHPUnit_Framework_AssertionFailedError $e, $time)
     {
         $this->writeProgressWithColor('bg-red, fg-white', 'FAIL');
+        $this->lastTestFailed = true;
+        if (getenv('TDDIUM')) {
+            print "\n" . $e->__toString();
+        }
+    }
+
+    /**
+     * A warning occurred.
+     *
+     * @param PHPUnit_Framework_Test    $test
+     * @param PHPUnit_Framework_Warning $e
+     * @param float                     $time
+     */
+    public function addWarning(PHPUnit_Framework_Test $test, PHPUnit_Framework_Warning $e, $time)
+    {
+        $this->writeProgressWithColor('fg-red, bold', 'WARNING');
         $this->lastTestFailed = true;
         if (getenv('TDDIUM')) {
             print "\n" . $e->__toString();

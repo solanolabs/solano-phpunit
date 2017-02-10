@@ -144,6 +144,18 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
     }
 
     /**
+     * A warning occurred.
+     *
+     * @param PHPUnit_Framework_Test    $test
+     * @param PHPUnit_Framework_Warning $e
+     * @param float                     $time
+     */
+    public function addWarning(PHPUnit_Framework_Test $test, PHPUnit_Framework_Warning $e, $time)
+    {
+        $this->addNonPassTest('error', $test, $e, $time);
+    }
+
+    /**
      * Incomplete test.
      *
      * @param PHPUnit_Framework_Test $test
@@ -236,7 +248,7 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
     /**
      * Add testcase to the output
      *
-     * @param PHPUnit_Framework_TestSuite $suite
+     * @param array $testcase
      */
     private function addTestCase($testcase) 
     {
