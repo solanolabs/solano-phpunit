@@ -177,7 +177,7 @@ class SolanoLabs_PHPUnit_Util
      *
      * @return bool
      */
-    protected static function isUtf8($string)
+    public static function isUtf8($string)
     {
         $length = strlen($string);
         for ($i = 0; $i < $length; $i++) {
