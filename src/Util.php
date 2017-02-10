@@ -122,8 +122,9 @@ class SolanoLabs_PHPUnit_Util
     {
         if (is_array($data)) {
             array_walk_recursive($data, function (&$input) {
-            if (is_string($input)) {
-                    $input = self::convertToUtf8($input);
+                if (is_string($input)) {
+                    # Cannot use 'self::' in an anonymous function with earlier versions of PHP
+                    $input = SolanoLabs_PHPUnit_Util::convertToUtf8($input);
                 }
             });
             unset($input);
