@@ -13,16 +13,26 @@ tests:
       - tests/**Test.php
   # Test excluding all test files
   - ./solano-phpunit --group not_set
+  - ./tests/_files/fatal_in_bootstrap.sh
+  - ./tests/_files/fatal_in_test.sh
+  - ./tests/_files/fatal_in_src.sh
+  - ./tests/_files/pass_and_fatal_in_tests.sh
 
 php:
   php_version:
     SPLIT:
-      - '5.3'
       - '5.5'
       - '7.0'
 
 hooks:
-  pre_setup: composer install
+  pre_setup: |
+    set -e # Exit on error
+    composer install
+    # Ensure jq is installed for verifying fatal errors are handled as expected
+    if [[ ! -f "$HOME/bin/jq" ]]; then
+      wget -O $HOME/bin/jq https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
+      chmod +x $HOME/bin/jq # $HOME/bin is in $PATH
+    fi
 
 cache:
   # Ensure each build pulls fresh dependencies to check for requirements breaking

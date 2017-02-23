@@ -118,6 +118,11 @@ class SolanoLabs_PHPUnit_Configuration
     public $minXmlFile = false;
 
     /**
+     * @var int
+     */
+    public $rerunFatalMaxCount = 1;
+
+    /**
      * @var string
      */
     public $testsuiteFilter = '';
@@ -148,6 +153,7 @@ class SolanoLabs_PHPUnit_Configuration
         $config->checkTestsuiteOption();
         $config->checkPriorityFile();
         $config->checkAlphaOrder();
+        $config->checkRerunFatalMaxCount();
 
         if (count($config->parseErrors)) { return $config; }
 
@@ -167,6 +173,9 @@ class SolanoLabs_PHPUnit_Configuration
         if (getenv('TDDIUM') && !in_array('--debug', $config->args)) {
             $config->args[] = '--debug';
         }
+
+        // Specify current working directory in case tests change it
+        putenv("SOLANO_WORKING_DIRECTORY=" . getcwd());
 
         return $config;
     }
@@ -453,6 +462,32 @@ class SolanoLabs_PHPUnit_Configuration
                 unset($this->args[1 + $key]);
                 unset($this->args[$key]);
             }
+        }
+    }
+
+    /**
+     * Was a valid '--rerun-fatal-max-count <count>' supplied?
+     */
+    private function checkRerunFatalMaxCount()
+    {
+        if ($key = array_search('--rerun-fatal-max-count', $this->args)) {
+            if (!isset($this->args[1 + $key])) {
+                $this->parseErrors[] = "### Error: No --rerun-fatal-max-count value specified";
+            } elseif (!is_numeric($this->args[1 + $key])) {
+                $this->parseErrors[] = "### Error: --rerun-fatal-max-count value is not numeric";
+            } else {
+                $rerunFatalMaxCount = intval($this->args[1 + $key]);
+                if ($rerunFatalMaxCount < 1) {
+                    $this->parseErrors[] = "### Error: --rerun-fatal-max-count value is less then 1";
+                } else {
+                    $this->rerunFatalMaxCount = $rerunFatalMaxCount;
+                    unset($this->args[1 + $key]);
+                    unset($this->args[$key]);
+                }
+            }
+        }
+        if ($this->rerunFatalMaxCount > 1) {
+            putenv('SOLANO_PHPUNIT_MAX_TRIES=' . $this->rerunFatalMaxCount);
         }
     }
 

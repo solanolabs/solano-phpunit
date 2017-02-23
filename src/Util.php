@@ -27,7 +27,7 @@ class SolanoLabs_PHPUnit_Util
     {
         if (!$workingDir) { $workingDir = getcwd(); }
 
-        if (!self::isRootRelativePath($path)) {
+        if (!SolanoLabs_PHPUnit_Util::isRootRelativePath($path)) {
             $path = $workingDir . DIRECTORY_SEPARATOR . $path;
         }
 
@@ -94,7 +94,7 @@ class SolanoLabs_PHPUnit_Util
      */
     public static function toAbsolutePath($path, $useIncludePath = false)
     {
-        if (self::isRootRelativePath($path)) {
+        if (SolanoLabs_PHPUnit_Util::isRootRelativePath($path)) {
             return $path;
         }
 
@@ -122,7 +122,7 @@ class SolanoLabs_PHPUnit_Util
     {
         if (is_array($data)) {
             array_walk_recursive($data, function (&$input) {
-            if (is_string($input)) {
+                if (is_string($input)) {
                     $input = PHPUnit_Util_String::convertToUtf8($input);
                 }
             });
@@ -139,11 +139,67 @@ class SolanoLabs_PHPUnit_Util
     public static function shortenFilename($file, $stripPath = '')
     {
         if (!$stripPath) {
-            $stripPath = getcwd();
+            if (getenv('SOLANO_WORKING_DIRECTORY')) {
+                $stripPath = getenv('SOLANO_WORKING_DIRECTORY');
+            } else {
+                $stripPath = getcwd();
+            }
         }
         if (0 === strpos($file, $stripPath)) {
             $file = substr($file, strlen($stripPath) + 1);
         }
         return $file;
+    }
+
+    // PHPUnit_Util_String removed in later versions of PHPUnit :(
+
+    /**
+     * Convert string to UTF-8
+     *
+     * @param string                $string
+     *
+     * @return string
+     */
+    public static function convertToUtf8($string)
+    {
+        if (!SolanoLabs_PHPUnit_Util::isUtf8($string)) {
+            if (function_exists('mb_convert_encoding')) {
+                $string = mb_convert_encoding($string, 'UTF-8');
+            } else {
+                $string = utf8_encode($string);
+            }
+        }
+        return $string;
+    }
+
+    /**
+     * Checks a string for UTF-8 encoding.
+     *
+     * @param string $string
+     *
+     * @return bool
+     */
+    private static function isUtf8($string)
+    {
+        $length = strlen($string);
+        for ($i = 0; $i < $length; $i++) {
+            if (ord($string[$i]) < 0x80) {
+                $n = 0;
+            } elseif ((ord($string[$i]) & 0xE0) == 0xC0) {
+                $n = 1;
+            } elseif ((ord($string[$i]) & 0xF0) == 0xE0) {
+                $n = 2;
+            } elseif ((ord($string[$i]) & 0xF0) == 0xF0) {
+                $n = 3;
+            } else {
+                return false;
+            }
+            for ($j = 0; $j < $n; $j++) {
+                if ((++$i == $length) || ((ord($string[$i]) & 0xC0) != 0x80)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }
