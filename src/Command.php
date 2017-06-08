@@ -120,11 +120,18 @@ class SolanoLabs_PHPUnit_Command
         }
 
         if (count($config->testFiles)) {
-            //  note first test file in case it causes a fatal PHP error
+            // Set env var for determining state in case of fatal PHP error
             $filesList = array_keys($config->testFiles);
-            putenv("SOLANO_LAST_FILE_STARTED=" . SolanoLabs_PHPUnit_Util::shortenFilename($filesList[0], $config->workingDir));
+            putenv('SOLANO_PHPUNIT_STATE=init;' . SolanoLabs_PHPUnit_Util::shortenFilename($filesList[0], $config->workingDir));
         } else {
-            if ($exit) {
+            // If this is a replacement/continuation of a failed process, exit with its code
+            if ($setExitCode = getenv('SOLANO_PHPUNIT_EXIT_CODE')) {
+                if ($exit) {
+                    exit($setExitCode);
+                } else {
+                    return false;
+                }
+            } elseif ($exit) {
                 echo("No test files found or all test files have already been reported.\n");
                 self::usage();
                 exit(0);
@@ -250,17 +257,19 @@ class SolanoLabs_PHPUnit_Command
     {
         echo("Usage: " . basename($_SERVER['argv'][0]) . " [options]\n");
         echo("Options:\n");
-        echo("   --configuration <file>       Specify a non-default phpunit.xml file\n");
-        echo("   --temp-dir <dir>             Specify a directory for temporary files\n");
-        echo("   --files <file_list>          Comma separated list of files. If not specified, all tests defined in configuration file will be run.\n");
-        echo("   --tddium-output-file <file>  Can also be set with \$TDDIUM_OUTPUT_FILE environment variable\n");
-        echo("   --ignore-exclude             Ignore <exclude/> child nodes of <testsuite/>.\n");
-        echo("   --split                      Run tests one test file per process.\n");
-        echo("   --config-debug               XML configuration passed to phpunit will not be deleted.\n");
-        echo("   --[rev-]alpha                Run test files in alphabetical (or reverse) order.\n");
-        echo("   --priority-file              Set priority of tests from separate file.\n");
-        echo("                                See https://github.com/solano/solano-phpunit/tree/master/tests/_files/phpunit_priority_separate_file.txt\n");
-        echo("   -h|--help                    Prints this usage information.\n");
+        echo("   --configuration <file>          Specify a non-default phpunit.xml file\n");
+        echo("   --temp-dir <dir>                Specify a directory for temporary files\n");
+        echo("   --files <file_list>             Comma separated list of files. If not specified, all tests defined in configuration file will be run.\n");
+        echo("   --tddium-output-file <file>     Can also be set with \$TDDIUM_OUTPUT_FILE environment variable\n");
+        echo("   --ignore-exclude                Ignore <exclude/> child nodes of <testsuite/>.\n");
+        echo("   --split                         Run tests one test file per process.\n");
+        echo("   --config-debug                  XML configuration passed to phpunit will not be deleted.\n");
+        echo("   --[rev-]alpha                   Run test files in alphabetical (or reverse) order.\n");
+        echo("   --priority-file                 Set priority of tests from separate file.\n");
+        echo("                                   See https://github.com/solano/solano-phpunit/tree/master/tests/_files/phpunit_priority_separate_file.txt\n");
+        echo("   --rerun-fatal-max-count <count> Rerun test files that triggered fatal PHP errors up to <count> times.\n");
+        echo("                                   By default a fatal PHP error will cause a test file to be marked an error.\n");
+        echo("   -h|--help                       Prints this usage information.\n");
         echo(" * Any other supplied options will be passed on to phpunit\n");
     }
 }

@@ -93,4 +93,16 @@ class Solano_PHPUnit_Wrapper_Configuration_Test extends PHPUnit_Framework_TestCa
         $config = SolanoLabs_PHPUnit_Configuration::parseArgs($args);
         $this->assertEquals($config->ignoreExclude, true);
     }
+
+    public function testRerunFatalMaxCount()
+    {
+        // If SOLANO_PHPUNIT_MAX_TRIES was already set, restore it after testing
+        $restore_env_var = getenv('SOLANO_PHPUNIT_MAX_TRIES');
+        $args = array('', '--rerun-fatal-max-count', '2');
+        $config = SolanoLabs_PHPUnit_Configuration::parseArgs($args);
+        $this->assertEquals($config->rerunFatalMaxCount, 2);
+        if ($restore_env_var) {
+            putenv('SOLANO_PHPUNIT_MAX_TRIES=' . $restore_env_var);
+        }
+    }
 }

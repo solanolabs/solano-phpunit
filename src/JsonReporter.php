@@ -30,7 +30,7 @@ class SolanoLabs_PHPUnit_JsonReporter
             if (is_null($jsonData) || !isset($jsonData['byfile']) || !is_array($jsonData['byfile'])) {
                 echo("### ERROR: JSON data could not be read from " . $outputFile . "\n");
                 $jsonData = array('byfile' => array());
-                self::writeJsonToFile($jsonData);
+                SolanoLabs_PHPUnit_JsonReporter::writeJsonToFile($jsonData);
             }
             return $jsonData;
         }
@@ -61,14 +61,14 @@ class SolanoLabs_PHPUnit_JsonReporter
     {
         $file = SolanoLabs_PHPUnit_Util::convertOutputToUTF8($file);
         $testcase = SolanoLabs_PHPUnit_Util::convertOutputToUTF8($testcase);
-        $jsonData = self::readOutputFile($outputFile);
+        $jsonData = SolanoLabs_PHPUnit_JsonReporter::readOutputFile($outputFile);
         if (empty($jsonData['byfile'][$file])) {
             $jsonData['byfile'][$file] = array($testcase);
         } else {
             $jsonData['byfile'][$file][] = $testcase;
         }
 
-        self::writeJsonToFile($outputFile, $jsonData);
+        SolanoLabs_PHPUnit_JsonReporter::writeJsonToFile($outputFile, $jsonData);
     }
 
     /**
