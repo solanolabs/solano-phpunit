@@ -1,8 +1,10 @@
 <?php
+use PHPUnit\Framework\TestCase;
+
 /**
  * @group Configuration
  */
-class Solano_PHPUnit_Wrapper_ConfigurationPriority_Test extends PHPUnit_Framework_TestCase
+class Solano_PHPUnit_Wrapper_ConfigurationPriority_Test extends TestCase
 {
     // Test that 'priority' attributes in supplied phpunit.xml file result in proper ordering of tests
     public function testXmlDefinedPriority()
