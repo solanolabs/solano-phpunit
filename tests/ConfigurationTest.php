@@ -1,5 +1,7 @@
 <?php
-class Solano_PHPUnit_Wrapper_Configuration_Test extends PHPUnit_Framework_TestCase
+use PHPUnit\Framework\TestCase;
+
+class Solano_PHPUnit_Wrapper_Configuration_Test extends TestCase
 {
     public function testCliBootstrap()
     {

@@ -1,9 +1,11 @@
 <?php
+use PHPUnit\Framework\TestCase;
+
 /**
  * @group Configuration
  * @group ConfigurationEnumeratedFiles
  */
-class Solano_PHPUnit_Wrapper_ConfigurationExtendedAttributes_Test extends PHPUnit_Framework_TestCase
+class Solano_PHPUnit_Wrapper_ConfigurationExtendedAttributes_Test extends TestCase
 {
     public function testExtendedAttributes()
     {
