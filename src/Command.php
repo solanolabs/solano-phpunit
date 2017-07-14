@@ -208,7 +208,7 @@ class SolanoLabs_PHPUnit_Command
         $config->args[0] = 'vendor/phpunit/phpunit/phpunit'; // Just a placeholder
         $config->args[] = "--configuration";
         $config->args[] = $tempFile;
-        $phpUnit = new PHPUnit_TextUI_Command();
+        $phpUnit = new MapCommand();
         $exitCode = $phpUnit->run($config->args, false);
 
         // Add skip notices if group/testsuite filters are in use

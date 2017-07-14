@@ -17,7 +17,7 @@ use SebastianBergmann\Environment\Console;
  * @link       https://www.solanolabs.com/
  */
 
-class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
+class SolanoLabs_PHPUnit_Printer extends MapResultPrinter
 {
     /**
      * @var array
@@ -48,11 +48,11 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     /**
      * An error occurred.
      *
-     * @param PHPUnit_Framework_Test $test
-     * @param Exception              $e
-     * @param float                  $time
+     * @param MapTest   $test
+     * @param Exception $e
+     * @param float     $time
      */
-    public function addError(PHPUnit_Framework_Test $test, Exception $e, $time)
+    public function addError(MapTest $test, Exception $e, $time)
     {
         $this->writeProgressWithColor('fg-red, bold', 'ERROR');
         $this->lastTestFailed = true;
@@ -64,11 +64,11 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     /**
      * A failure occurred.
      *
-     * @param PHPUnit_Framework_Test                 $test
-     * @param PHPUnit_Framework_AssertionFailedError $e
-     * @param float                                  $time
+     * @param MapTest                 $test
+     * @param MapAssertionFailedError $e
+     * @param float                   $time
      */
-    public function addFailure(PHPUnit_Framework_Test $test, PHPUnit_Framework_AssertionFailedError $e, $time)
+    public function addFailure(MapTest $test, MapAssertionFailedError $e, $time)
     {
         $this->writeProgressWithColor('bg-red, fg-white', 'FAIL');
         $this->lastTestFailed = true;
@@ -80,11 +80,11 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     /**
      * A warning occurred.
      *
-     * @param PHPUnit_Framework_Test    $test
-     * @param PHPUnit_Framework_Warning $e
-     * @param float                     $time
+     * @param MapTest    $test
+     * @param MapWarning $e
+     * @param float      $time
      */
-    public function addWarning(PHPUnit_Framework_Test $test, PHPUnit_Framework_Warning $e, $time)
+    public function addWarning(MapTest $test, MapWarning $e, $time)
     {
         $this->writeProgressWithColor('fg-red, bold', 'WARNING');
         $this->lastTestFailed = true;
@@ -96,11 +96,11 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     /**
      * Incomplete test.
      *
-     * @param PHPUnit_Framework_Test $test
-     * @param Exception              $e
-     * @param float                  $time
+     * @param MapTest   $test
+     * @param Exception $e
+     * @param float     $time
      */
-    public function addIncompleteTest(PHPUnit_Framework_Test $test, Exception $e, $time)
+    public function addIncompleteTest(MapTest $test, Exception $e, $time)
     {
         $this->writeProgressWithColor('fg-yellow, bold', 'INCOMPLETE');
         $this->lastTestFailed = true;
@@ -112,11 +112,11 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     /**
      * Risky test.
      *
-     * @param PHPUnit_Framework_Test $test
-     * @param Exception              $e
-     * @param float                  $time
+     * @param MapTest   $test
+     * @param Exception $e
+     * @param float     $time
      */
-    public function addRiskyTest(PHPUnit_Framework_Test $test, Exception $e, $time)
+    public function addRiskyTest(MapTest $test, Exception $e, $time)
     {
         $this->writeProgressWithColor('fg-yellow, bold', 'RISKY');
         $this->lastTestFailed = true;
@@ -128,16 +128,16 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     /**
      * Skipped test.
      *
-     * @param PHPUnit_Framework_Test $test
-     * @param Exception              $e
-     * @param float                  $time
+     * @param MapTest   $test
+     * @param Exception $e
+     * @param float     $time
      */
-    public function addSkippedTest(PHPUnit_Framework_Test $test, Exception $e, $time)
+    public function addSkippedTest(MapTest $test, Exception $e, $time)
     {
         // PHPUnit will skip a test without "starting" or "ending" it if a dependency isn't being met.
         if ($test->getName() != $this->lastTestName) {
             $this->writeNewLine();
-            $this->writeProgressWithColor('fg-cyan, bold', 'SKIPPING: ' . PHPUnit_Util_Test::describe($test));
+            $this->writeProgressWithColor('fg-cyan, bold', 'SKIPPING: ' . MapTestUtil::describe($test));
             $this->writeNewLine();
             $this->writeProgress($e->getMessage());
             $this->writeNewLine();
@@ -150,14 +150,14 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     /**
      * A test started.
      *
-     * @param PHPUnit_Framework_Test $test
+     * @param MapTest $test
      */
-    public function startTest(PHPUnit_Framework_Test $test)
+    public function startTest(MapTest $test)
     {
         $this->write(
             sprintf(
                 "\nStarting test '%s'.\n",
-                PHPUnit_Util_Test::describe($test)
+                MapTestUtil::describe($test)
             )
         );
         $this->lastTestName = $test->getName();
@@ -166,25 +166,25 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     /**
      * A test ended.
      *
-     * @param PHPUnit_Framework_Test $test
-     * @param float                  $time
+     * @param MapTest $test
+     * @param float   $time
      */
-    public function endTest(PHPUnit_Framework_Test $test, $time)
+    public function endTest(MapTest $test, $time)
     {
         if (!$this->lastTestFailed) {
             $this->writeProgressWithColor('fg-green, bold', 'PASS');
         }
 
-        if ($test instanceof PHPUnit_Framework_TestCase) {
+        if ($test instanceof MapTestCase) {
             $this->numAssertions += $test->getNumAssertions();
-        } elseif ($test instanceof PHPUnit_Extensions_PhptTestCase) {
+        } elseif ($test instanceof MapPhptTestCase) {
             $this->numAssertions++;
         }
 
         $this->lastTestFailed = false;
         $this->lastTestName = '';
 
-        if ($test instanceof PHPUnit_Framework_TestCase) {
+        if ($test instanceof MapTestCase) {
             if (!$test->hasExpectationOnOutput()) {
                 if ($output = $test->getActualOutput()) {
                     $this->writeNewLine();

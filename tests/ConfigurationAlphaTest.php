@@ -2,7 +2,7 @@
 /**
  * @group Configuration
  */
-class Solano_PHPUnit_Wrapper_ConfigurationAlpha_Test extends PHPUnit_Framework_TestCase
+class Solano_PHPUnit_Wrapper_ConfigurationAlpha_Test extends MapTestCase
 {
     // Test that --alpha sorts tests in alphabetical order
     public function testAlphaOrder()

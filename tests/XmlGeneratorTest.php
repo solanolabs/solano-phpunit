@@ -1,12 +1,13 @@
 <?php
-class Solano_PHPUnit_Wrapper_XmlGenerator_Test extends PHPUnit_Framework_TestCase
+class Solano_PHPUnit_Wrapper_XmlGenerator_Test extends MapTestCase
 {
     private $domDoc;
     private $xpath;
     private $config;
 
-    public function __construct()
+    public function __construct($name = null, array $data = [], $dataName = '')
     {
+        parent::__construct();
         $args = array('', '--configuration', 'tests' . DIRECTORY_SEPARATOR . '_files' . DIRECTORY_SEPARATOR . 'xml_generator.xml');
         $this->config = SolanoLabs_PHPUnit_Configuration::parseArgs($args);
         SolanoLabs_PHPUnit_TestFileEnumerator::EnumerateTestFiles($this->config);

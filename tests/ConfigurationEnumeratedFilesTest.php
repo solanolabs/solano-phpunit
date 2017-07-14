@@ -3,7 +3,7 @@
  * @group Configuration
  * @group ConfigurationEnumeratedFiles
  */
-class Solano_PHPUnit_Wrapper_ConfigurationEnumeratedFiles_Test extends PHPUnit_Framework_TestCase
+class Solano_PHPUnit_Wrapper_ConfigurationEnumeratedFiles_Test extends MapTestCase
 {
     public function testEnumerateTestFiles()
     {

@@ -16,7 +16,7 @@ if (getenv('TDDIUM')):
  * @copyright  Solano Labs https://www.solanolabs.com/
  * @link       https://www.solanolabs.com/
  */
-class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUnit_Framework_TestListener
+class SolanoLabs_PHPUnit_Listener extends MapPrinter
 {
     /**
      * @var    string
@@ -65,17 +65,17 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
     /**
      * A test started.
      *
-     * @param PHPUnit_Framework_Test $test
+     * @param MapTest $test
      */
-    public function startTest(PHPUnit_Framework_Test $test)
+    public function startTest(MapTest $test)
     {
         if (getenv('TDDIUM')) {
             global $tddium_output_buffer;
             $tddium_output_buffer = "";
         }
-        if (!$test instanceof PHPUnit_Framework_Warning) {
+        if (!$test instanceof MapWarning) {
             $testcase = array('id' => '', 'address' => '', 'status' => '', 'stderr' => '', 'stdout' => '', 'file' => '');
-            if ($test instanceof PHPUnit_Framework_TestCase) {
+            if ($test instanceof MapTestCase) {
                 $class = new ReflectionClass($test);
                 $className = $class->getName();
                 $testName = $test->getName();
@@ -98,10 +98,10 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
     /**
      * A test ended.
      *
-     * @param PHPUnit_Framework_Test $test
-     * @param float                  $time
+     * @param MapTest $test
+     * @param float   $time
      */
-    public function endTest(PHPUnit_Framework_Test $test, $time)
+    public function endTest(MapTest $test, $time)
     {
         $testcase = $this->currentTestcase;
         if (!$testcase['status']) {
@@ -122,11 +122,11 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
     /**
      * An error occurred.
      *
-     * @param PHPUnit_Framework_Test $test
-     * @param Exception              $e
-     * @param float                  $time
+     * @param MapTest   $test
+     * @param Exception $e
+     * @param float     $time
      */
-    public function addError(PHPUnit_Framework_Test $test, Exception $e, $time)
+    public function addError(MapTest $test, Exception $e, $time)
     {   
         $this->addNonPassTest('error', $test, $e, $time);
     }
@@ -134,11 +134,11 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
     /**
      * A failure occurred.
      *
-     * @param PHPUnit_Framework_Test                 $test
-     * @param PHPUnit_Framework_AssertionFailedError $e
-     * @param float                                  $time
+     * @param MapTest                 $test
+     * @param MapAssertionFailedError $e
+     * @param float                   $time
      */
-    public function addFailure(PHPUnit_Framework_Test $test, PHPUnit_Framework_AssertionFailedError $e, $time)
+    public function addFailure(MapTest $test, MapAssertionFailedError $e, $time)
     {
         $this->addNonPassTest('fail', $test, $e, $time);
     }
@@ -146,11 +146,11 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
     /**
      * A warning occurred.
      *
-     * @param PHPUnit_Framework_Test    $test
-     * @param PHPUnit_Framework_Warning $e
-     * @param float                     $time
+     * @param MapTest    $test
+     * @param MapWarning $e
+     * @param float      $time
      */
-    public function addWarning(PHPUnit_Framework_Test $test, PHPUnit_Framework_Warning $e, $time)
+    public function addWarning(MapTest $test, MapWarning $e, $time)
     {
         $this->addNonPassTest('error', $test, $e, $time);
     }
@@ -158,11 +158,11 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
     /**
      * Incomplete test.
      *
-     * @param PHPUnit_Framework_Test $test
-     * @param Exception              $e
-     * @param float                  $time
+     * @param MapTest   $test
+     * @param Exception $e
+     * @param float     $time
      */
-    public function addIncompleteTest(PHPUnit_Framework_Test $test, Exception $e, $time)
+    public function addIncompleteTest(MapTest $test, Exception $e, $time)
     {
         $this->addNonPassTest('skip', $test, $e, $time, 'Incomplete Test: ');
     }
@@ -170,11 +170,11 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
     /**
      * Risky test.
      *
-     * @param PHPUnit_Framework_Test $test
-     * @param Exception              $e
-     * @param float                  $time
+     * @param MapTest   $test
+     * @param Exception $e
+     * @param float     $time
      */
-    public function addRiskyTest(PHPUnit_Framework_Test $test, Exception $e, $time)
+    public function addRiskyTest(MapTest $test, Exception $e, $time)
     {
         $this->addNonPassTest('error', $test, $e, $time, 'Risky Test: ');
     }
@@ -182,11 +182,11 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
     /**
      * Skipped test.
      *
-     * @param PHPUnit_Framework_Test $test
-     * @param Exception              $e
-     * @param float                  $time
+     * @param MapTest   $test
+     * @param Exception $e
+     * @param float     $time
      */
-    public function addSkippedTest(PHPUnit_Framework_Test $test, Exception $e, $time)
+    public function addSkippedTest(MapTest $test, Exception $e, $time)
     {
         if (count($this->currentTestcase)) {
             $this->addNonPassTest('skip', $test, $e, $time, 'Skipped Test: ');
@@ -201,12 +201,12 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
     /**
      * Add a non-passing test to the output
      *
-     * @param string                 $status
-     * @param PHPUnit_Framework_Test $test
-     * @param Exception              $e
-     * @param string                 $stderrPrefix
+     * @param string    $status
+     * @param MapTest   $test
+     * @param Exception $e
+     * @param string    $stderrPrefix
      */
-    private function addNonPassTest($status, PHPUnit_Framework_Test $test, Exception $e, $time, $stderrPrefix = '')
+    private function addNonPassTest($status, MapTest $test, Exception $e, $time, $stderrPrefix = '')
     {
         $this->currentTestcase['status'] = $status;
         $this->currentTestcase['time'] = $time;
@@ -214,7 +214,7 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
             $this->currentTestcase['stdout'] = $test->getActualOutput();
         }
         $this->currentTestcase['stderr'] = $stderrPrefix . $e->getMessage();
-        $traceback = PHPUnit_Util_Filter::getFilteredStacktrace($e, false);
+        $traceback = MapFilter::getFilteredStacktrace($e, false);
         // Strip path from traceback?
         for($i = 0; $i < count($traceback); $i++) {
             if (0 === strpos($traceback[$i]['file'], $this->stripPath)) {
@@ -227,9 +227,9 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
     /**
      * A testsuite started.
      *
-     * @param PHPUnit_Framework_TestSuite $suite
+     * @param MapTestSuite $suite
      */
-    public function startTestSuite(PHPUnit_Framework_TestSuite $suite)
+    public function startTestSuite(MapTestSuite $suite)
     {
         $this->currentTestSuiteName = $suite->getName();
     }
@@ -237,9 +237,9 @@ class SolanoLabs_PHPUnit_Listener extends PHPUnit_Util_Printer implements PHPUni
     /**
      * A testsuite ended.
      *
-     * @param PHPUnit_Framework_TestSuite $suite
+     * @param MapTestSuite $suite
      */
-    public function endTestSuite(PHPUnit_Framework_TestSuite $suite)
+    public function endTestSuite(MapTestSuite $suite)
     {
         $this->currentTestSuiteName = '';
         $this->currentTestSuiteAddress = '';

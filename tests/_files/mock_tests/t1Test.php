@@ -5,7 +5,7 @@
  * @group Group_A
  * @group Group_B
  */
-class Solano_PHPUnit_Wrapper_MockTest_t1_Test extends PHPUnit_Framework_TestCase
+class Solano_PHPUnit_Wrapper_MockTest_t1_Test extends MapTestCase
 {
     public function testMockT1()
     {

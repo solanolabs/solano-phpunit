@@ -32,10 +32,15 @@ class SolanoLabs_PHPUnit_Version_Prepare
     {
         self::getPHPUnitVersion();
         if (version_compare(self::$phpunit_version, '6.0', '>=')) {
-            self::aliasClasses();
-            self::RewriteClasses();
+            self::writePHPUnitClassMapFiles('6+');
+        } else {
+            self::writePHPUnitClassMapFiles('5-');
         }
-
+        // If the current working directory is solano-phpunit's root directory,
+        // presume solano-phpunit is self testing and update test files accordingly
+        if (dirname(dirname(__FILE__)) == getcwd()) {
+            self::writeSolanoPHPUnitTestFiles();
+        }
     }
 
     /**
@@ -53,92 +58,67 @@ class SolanoLabs_PHPUnit_Version_Prepare
     }
 
     /**
-     * Alias PHPUnit classes
-     * Inspired by From https://github.com/symfony/symfony/issues/21534#issuecomment-278278352
+     * Map class names for different versions of PHPUnit that solano-phpunit uses
      */
-    private static function aliasClasses()
+    private static function getPHPUnitClassMaps()
     {
-        $phpunit_classes_used_by_solano_phpunit = array(
-            '\\PHPUnit_Framework_TestListener',
-            '\\PHPUnit_TextUI_Command',
-            '\\PHPUnit_Framework_Test',
-            '\\PHPUnit_Framework_AssertionFailedError',
-            '\\PHPUnit_Util_Printer',
-            '\\PHPUnit_Framework_Warning',
-            '\\PHPUnit_Framework_TestSuite',
-            '\\PHPUnit_TextUI_ResultPrinter',
-            '\\PHPUnit_Framework_TestCase',
-            '\\PHPUnit_Framework_Error_Warning',
-            '\\PHPUnit_Util_Test',
-            '\\PHPUnit_Runner_Version'
+        return array(
+            'AssertionFailedError' => array('5-' => '\\PHPUnit_Framework_AssertionFailedError', '6+' => '\\PHPUnit\\Framework\\AssertionFailedError'),
+            'Command' => array('5-' => '\\PHPUnit_TextUI_Command', '6+' => '\\PHPUnit\\TextUI\\Command'),
+            'Filter' => array('5-' => '\\PHPUnit_Util_Filter', '6+' => '\\PHPUnit\\Util\\Filter'),
+            'Listener' => array('5-' => '\\PHPUnit_Util_Printer implements \\PHPUnit_Framework_TestListener', '6+' => '\\PHPUnit\\Util\\Printer implements \\PHPUnit\\Framework\\TestListener'),
+            'PhptTestCase' => array('5-' => '\\PHPUnit_Extensions_PhptTestCase', '6+' => '\\PHPUnit\\Runner\\PhptTestCase'),
+            'Printer' => array('5-' => '\\PHPUnit_Util_Printer', '6+' => '\\PHPUnit\\Util\\Printer'),
+            'ResultPrinter' => array('5-' => '\\PHPUnit_TextUI_ResultPrinter', '6+' => '\\PHPUnit\\TextUI\\ResultPrinter'),
+            'Test' => array('5-' => '\\PHPUnit_Framework_Test', '6+' => '\\PHPUnit\\Framework\\Test'),
+            'TestCase' => array('5-' => '\\PHPUnit_Framework_TestCase', '6+' => '\\PHPUnit\\Framework\\TestCase'),
+            'TestListener' => array('5-' => '\\PHPUnit_Framework_TestListener', '6+' => '\\PHPUnit\\Framework\\TestListener'),
+            'TestSuite' => array('5-' => '\\PHPUnit_Framework_Suite', '6+' => '\\PHPUnit\\Framework\\Suite'),
+            'TestUtil' => array('5-' => '\\PHPUnit_Util_Test', '6+' => '\\PHPUnit\\Util\\Test'),
+            'Warning' => array('5-' => '\\PHPUnit_Framework_Warning', '6+' => '\\PHPUnit\\Framework\\Error\\Warning')
         );
+    }
 
-        foreach ($phpunit_classes_used_by_solano_phpunit as $old_class) { 
-            $new_class = str_replace('_', '\\', $old_class);
-            if (!class_exists($old_class, true) && class_exists($new_class, true)) {
-                class_alias($new_class, $old_class, true);
-            } elseif (!class_exists($new_class, true) && class_exists($old_class, true)) {
-                class_alias($old_class, $new_class, true);
+    /**
+     * Dynamically write class mapping files
+     * Replace lines starting with 'class ' with appropraite class definition
+     */
+    private static function writePHPUnitClassMapFiles($version_id)
+    {
+        $dir = dirname(__FILE__);
+        foreach (self::getPHPUnitClassMaps() as $key => $version_mappings) {
+            $map_file = $dir . DIRECTORY_SEPARATOR . 'Map' . $key . '.php';
+            $lines = file($map_file);
+            $new_lines = array();
+            foreach ($lines as $line) {
+                if (0 === strpos($line, 'class ')) {
+                    $new_lines[] = 'class Map' . $key . ' extends ' . $version_mappings[$version_id] . ' {}' ;
+                } else {
+                    $new_lines[] = $line;
+                }
             }
+            file_put_contents($map_file, $new_lines);
         }
     }
 
     /**
-     * Aliasing classes is not enough for inheritance, so re-write some classes if needed
-     */
-    private static function RewriteClasses()
+    * Write test files to use the correct path
+    * e.g. change MapTestCase to \PHPUnit_Framework_TestCase or \PHPUnit\Framework\TestCase
+    */
+    private static function writeSolanoPHPUnitTestFiles()
     {
-        $rewrite_files = array(
-            dirname(__FILE__) . DIRECTORY_SEPARATOR . 'Listener.php' => array(
-                'PHPUnit_Util_Printer' => '\\PHPUnit\\Util\\Printer',
-                'PHPUnit_Framework_TestListener' => '\\PHPUnit\\Framework\\TestListener',
-                'PHPUnit_Framework_Test' => '\\PHPUnit\\Framework\\Test',
-                'PHPUnit_Framework_AssertionFailedError' => '\\PHPUnit\\Framework\\AssertionFailedError',
-                'PHPUnit_Util_Filter' => '\\PHPUnit\\Util\\Filter',
-                'PHPUnit_Framework_TestSuite' => '\\PHPUnit\\Framework\\TestSuite',
-                'PHPUnit_Framework_Warning' => '\\PHPUnit\\Framework\\Warning'
-            ),
-            dirname(__FILE__) . DIRECTORY_SEPARATOR . 'Printer.php' => array(
-                'PHPUnit_TextUI_ResultPrinter' => '\\PHPUnit\\TextUI\\ResultPrinter',
-                'PHPUnit_Framework_Test' => '\\PHPUnit\\Framework\\Test',
-                'PHPUnit_Framework_AssertionFailedError' => '\\PHPUnit\\Framework\\AssertionFailedError',
-                'PHPUnit_Framework_Warning' => '\\PHPUnit\\Framework\\Warning'
-            )
-        );
-        foreach($rewrite_files as $rewrite_file => $rewrite_strings) {
-            $content = file_get_contents($rewrite_file);
-            $content_pre_rewrite = $content;
-            foreach($rewrite_strings as $search => $replace) {
-                $content = str_replace($search, $replace, $content);
+        $facade = new File_Iterator_Facade;
+        $files = $facade->getFilesAsArray(dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'tests', 'Test.php');
+        foreach ($files as $file) {
+            $contents = file_get_contents($file);
+            if (false !== strpos($contents, 'MapTestCase')) {
+                if (version_compare(self::$phpunit_version, '6.0', '>=')) {
+                    $contents = str_replace('MapTestCase', '\\PHPUnit\\Framework\\TestCase', $contents);
+                } else {
+                    $contents = str_replace('MapTestCase', '\\PHPUnit_Framework_TestCase', $contents);
+                }
+                file_put_contents($file, $contents);
             }
-            self::MaybeRewriteFile($rewrite_file, $content_pre_rewrite, $content);
         }
     }
-
-    /**
-     * Write changes to file?
-     *
-     * @param  string       $file
-     * @param  string       $original_content
-     * @param  string       $new_content         
-     * @return boolean
-     */
-    private static function MaybeRewriteFile($file, $original_content, $new_content)
-    {
-        if ($original_content == $new_content) { return; }
-        $path_parts = pathinfo($file);
-        // Save original as backup?
-        $file_backup = $path_parts['dirname'] . DIRECTORY_SEPARATOR . $path_parts['filename'] . '-backup.' . $path_parts['extension']; 
-        if (!file_exists($file_backup)) {
-            file_put_contents($file_backup, $original_content);
-        }
-        // Save modified version for potential reference later?
-        $file_version_specific = $path_parts['dirname'] . DIRECTORY_SEPARATOR . $path_parts['filename'] . '-' . self::$phpunit_version . '.' . $path_parts['extension']; 
-        if (!file_exists($file_version_specific)) {
-            file_put_contents($file_version_specific, $new_content);
-        }
-        // Save new content in original file location
-        file_put_contents($file, $new_content);
-    }
-
 }
