@@ -1,5 +1,5 @@
 <?php
-class Solano_PHPUnit_Fatal_Src_Test extends PHPUnit_Framework_TestCase
+class Solano_PHPUnit_Fatal_Src_Test extends Replace_TestCase
 {
     public function testSrcFatalError()
     {

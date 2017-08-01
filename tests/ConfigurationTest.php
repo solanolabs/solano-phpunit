@@ -1,5 +1,5 @@
 <?php
-class Solano_PHPUnit_Wrapper_Configuration_Test extends PHPUnit_Framework_TestCase
+class Solano_PHPUnit_Wrapper_Configuration_Test extends Replace_TestCase
 {
     public function testCliBootstrap()
     {
@@ -42,7 +42,12 @@ class Solano_PHPUnit_Wrapper_Configuration_Test extends PHPUnit_Framework_TestCa
             $config = SolanoLabs_PHPUnit_Configuration::parseArgs($args);
         }
         catch (Exception $e) {
-            $this->assertEquals(get_class($e), 'PHPUnit_Framework_Error_Warning');
+            // Add leading slash (\) to reported exception class if it is not there
+            $exception_class = get_class($e);
+            if ('\\' != substr($exception_class, 0, 1)) {
+                $exception_class = '\\' . $exception_class;
+            }
+            $this->assertEquals($exception_class, 'Replace_ErrorWarning');
         }
     }
 

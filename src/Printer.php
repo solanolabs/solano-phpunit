@@ -16,7 +16,7 @@ use SebastianBergmann\Environment\Console;
  * @copyright  Solano Labs https://www.solanolabs.com/
  * @link       https://www.solanolabs.com/
  */
-class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
+class SolanoLabs_PHPUnit_Printer extends Replace_ResultPrinter
 {
     /**
      * @var array
@@ -47,11 +47,11 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     /**
      * An error occurred.
      *
-     * @param PHPUnit_Framework_Test $test
-     * @param Exception              $e
-     * @param float                  $time
+     * @param Replace_Test $test
+     * @param Exception    $e
+     * @param float        $time
      */
-    public function addError(PHPUnit_Framework_Test $test, Exception $e, $time)
+    public function addError(Replace_Test $test, Exception $e, $time)
     {
         $this->writeProgressWithColor('fg-red, bold', 'ERROR');
         $this->lastTestFailed = true;
@@ -63,11 +63,11 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     /**
      * A failure occurred.
      *
-     * @param PHPUnit_Framework_Test                 $test
-     * @param PHPUnit_Framework_AssertionFailedError $e
-     * @param float                                  $time
+     * @param Replace_Test                 $test
+     * @param Replace_AssertionFailedError $e
+     * @param float                        $time
      */
-    public function addFailure(PHPUnit_Framework_Test $test, PHPUnit_Framework_AssertionFailedError $e, $time)
+    public function addFailure(Replace_Test $test, Replace_AssertionFailedError $e, $time)
     {
         $this->writeProgressWithColor('bg-red, fg-white', 'FAIL');
         $this->lastTestFailed = true;
@@ -79,11 +79,11 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     /**
      * Incomplete test.
      *
-     * @param PHPUnit_Framework_Test $test
-     * @param Exception              $e
-     * @param float                  $time
+     * @param Replace_Test $test
+     * @param Exception    $e
+     * @param float        $time
      */
-    public function addIncompleteTest(PHPUnit_Framework_Test $test, Exception $e, $time)
+    public function addIncompleteTest(Replace_Test $test, Exception $e, $time)
     {
         $this->writeProgressWithColor('fg-yellow, bold', 'INCOMPLETE');
         $this->lastTestFailed = true;
@@ -95,11 +95,11 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     /**
      * Risky test.
      *
-     * @param PHPUnit_Framework_Test $test
-     * @param Exception              $e
-     * @param float                  $time
+     * @param Replace_Test $test
+     * @param Exception    $e
+     * @param float        $time
      */
-    public function addRiskyTest(PHPUnit_Framework_Test $test, Exception $e, $time)
+    public function addRiskyTest(Replace_Test $test, Exception $e, $time)
     {
         $this->writeProgressWithColor('fg-yellow, bold', 'RISKY');
         $this->lastTestFailed = true;
@@ -111,16 +111,16 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     /**
      * Skipped test.
      *
-     * @param PHPUnit_Framework_Test $test
-     * @param Exception              $e
-     * @param float                  $time
+     * @param Replace_Test $test
+     * @param Exception    $e
+     * @param float        $time
      */
-    public function addSkippedTest(PHPUnit_Framework_Test $test, Exception $e, $time)
+    public function addSkippedTest(Replace_Test $test, Exception $e, $time)
     {
         // PHPUnit will skip a test without "starting" or "ending" it if a dependency isn't being met.
         if ($test->getName() != $this->lastTestName) {
             $this->writeNewLine();
-            $this->writeProgressWithColor('fg-cyan, bold', 'SKIPPING: ' . PHPUnit_Util_Test::describe($test));
+            $this->writeProgressWithColor('fg-cyan, bold', 'SKIPPING: ' . Replace_TestUtil::describe($test));
             $this->writeNewLine();
             $this->writeProgress($e->getMessage());
             $this->writeNewLine();
@@ -133,14 +133,14 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     /**
      * A test started.
      *
-     * @param PHPUnit_Framework_Test $test
+     * @param Replace_Test $test
      */
-    public function startTest(PHPUnit_Framework_Test $test)
+    public function startTest(Replace_Test $test)
     {
         $this->write(
             sprintf(
                 "\nStarting test '%s'.\n",
-                PHPUnit_Util_Test::describe($test)
+                Replace_TestUtil::describe($test)
             )
         );
         $this->lastTestName = $test->getName();
@@ -149,25 +149,25 @@ class SolanoLabs_PHPUnit_Printer extends PHPUnit_TextUI_ResultPrinter
     /**
      * A test ended.
      *
-     * @param PHPUnit_Framework_Test $test
-     * @param float                  $time
+     * @param Replace_Test $test
+     * @param float   $time
      */
-    public function endTest(PHPUnit_Framework_Test $test, $time)
+    public function endTest(Replace_Test $test, $time)
     {
         if (!$this->lastTestFailed) {
             $this->writeProgressWithColor('fg-green, bold', 'PASS');
         }
 
-        if ($test instanceof PHPUnit_Framework_TestCase) {
+        if ($test instanceof Replace_TestCase) {
             $this->numAssertions += $test->getNumAssertions();
-        } elseif ($test instanceof PHPUnit_Extensions_PhptTestCase) {
+        } elseif ($test instanceof Replace_PhptTestCase) {
             $this->numAssertions++;
         }
 
         $this->lastTestFailed = false;
         $this->lastTestName = '';
 
-        if ($test instanceof PHPUnit_Framework_TestCase) {
+        if ($test instanceof Replace_TestCase) {
             if (!$test->hasExpectationOnOutput()) {
                 if ($output = $test->getActualOutput()) {
                     $this->writeNewLine();

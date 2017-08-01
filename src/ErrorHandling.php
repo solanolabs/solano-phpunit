@@ -66,8 +66,8 @@ function solanoPHPUnitShutdown()
             $rerun = true;
         } else {
             // The fatal error occurred outside of testing
-            if (empty($jsonData['fatal_errors'][$state])) {
-                if (isset($jsonData['fatal_errors']) || !is_array($jsonData['fatal_errors'])) {
+            if (empty($jsonData['fatal_errors']) || empty($jsonData['fatal_errors'][$state])) {
+                if (!isset($jsonData['fatal_errors']) || !is_array($jsonData['fatal_errors'])) {
                     $jsonData['fatal_errors'] = array($state => array($messageArray));
                 }
                 $failCount = 1;

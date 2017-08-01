@@ -123,12 +123,12 @@ class SolanoLabs_PHPUnit_Util
         if (is_array($data)) {
             array_walk_recursive($data, function (&$input) {
                 if (is_string($input)) {
-                    $input = PHPUnit_Util_String::convertToUtf8($input);
+                    $input = self::convertToUtf8($input);
                 }
             });
             unset($input);
         } else {
-            $data = PHPUnit_Util_String::convertToUtf8($data);
+            $data = self::convertToUtf8($data);
         }
         return $data;
     }
@@ -150,8 +150,6 @@ class SolanoLabs_PHPUnit_Util
         }
         return $file;
     }
-
-    // PHPUnit_Util_String removed in later versions of PHPUnit :(
 
     /**
      * Convert string to UTF-8
